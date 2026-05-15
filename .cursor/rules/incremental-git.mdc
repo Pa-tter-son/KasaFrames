@@ -1,0 +1,28 @@
+---
+description: Commit and push to GitHub after each logical step in this repo
+alwaysApply: true
+---
+
+# Incremental Git + GitHub
+
+## After each step
+
+When you finish a **distinct, reviewable step** (one feature slice, one page, one bugfix, one config change—not half-done work):
+
+1. Show `git status` (or equivalent) so the user sees what changed.
+2. **Commit** with a clear, imperative message, e.g. `Add contact form validation`, `Fix hero image LCP`.
+3. **Push** to `origin` on the current branch (usually `main`) so GitHub stays in sync.
+
+## Rules
+
+- Prefer **small commits** (one logical step per commit). Do not mix unrelated changes.
+- If `git` is not available in the environment, print the exact commands for the user to run locally.
+- If `origin` is missing or push fails (auth, no remote), tell the user how to add `origin` and authenticate (PAT or `gh auth login`), then retry.
+
+## One-liner (user’s machine, PowerShell)
+
+```powershell
+git add -A; git commit -m "YOUR_MESSAGE"; git push
+```
+
+Use `git.exe` if PowerShell profile blocks other shims.

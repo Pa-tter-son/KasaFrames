@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-kasa-cream text-kasa-black antialiased dark:bg-kasa-black dark:text-kasa-cream;
+  background-image: theme(backgroundImage.grain-light);
+}
+
+.dark body {
+  background-image: theme(backgroundImage.grain-dark);
+}
+
+::selection {
+  @apply bg-kasa-gold/30 text-kasa-black;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
