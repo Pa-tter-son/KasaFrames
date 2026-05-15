@@ -95,13 +95,10 @@ Keep GitHub aligned with your work: **one logical step → one commit → one pu
 3. **Commit**: `git commit -m "Short imperative description of this step"`
 4. **Push**: `git push`
 
-First-time setup (once per machine/repo):
+Remote for this project:
 
-```powershell
-cd "C:\Users\USER\Documents\Code\Agentic Testing"
-git init
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+```text
+https://github.com/Pa-tter-son/KasaFrames.git
 ```
 
 If PowerShell blocks shims, prefer `git.exe` / `npm.cmd` explicitly.
