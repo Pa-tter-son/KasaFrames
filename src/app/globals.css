@@ -1,6 +1,10 @@
+/* stylelint-disable-next-line */
 @tailwind base;
+/* stylelint-disable-next-line */
 @tailwind components;
+/* stylelint-disable-next-line */
 @tailwind utilities;
+/* stylelint-disable-next-line */
 
 :root {
   color-scheme: light;
@@ -14,17 +18,21 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
-  @apply bg-kasa-cream text-kasa-black antialiased dark:bg-kasa-black dark:text-kasa-cream;
-  background-image: theme(backgroundImage.grain-light);
-}
+@layer base {
+  body {
+    @apply bg-kasa-cream text-kasa-black antialiased;
+    background-image: theme('backgroundImage.grain-light');
+  }
 
-.dark body {
-  background-image: theme(backgroundImage.grain-dark);
+  .dark body {
+    @apply bg-kasa-black text-kasa-cream;
+    background-image: theme('backgroundImage.grain-dark');
+  }
 }
 
 ::selection {
-  @apply bg-kasa-gold/30 text-kasa-black;
+  background-color: rgba(234, 179, 8, 0.3);
+  color: #000;
 }
 
 @layer utilities {

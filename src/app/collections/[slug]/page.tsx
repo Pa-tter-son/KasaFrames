@@ -2,6 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { collections, getCollection, getProductsByCollection } from "@/lib/data/catalog";
 
 type Props = { params: Promise<{ slug: string }> };
