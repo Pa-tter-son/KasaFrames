@@ -1,0 +1,23 @@
+{
+  "framed-trio-mono.jpg": {
+    "title": "Monochrome Trio — Wide Mats",
+    "room": "Hallway",
+    "sizes": "40 × 50 cm",
+    "blurb": "Generous mat borders give each print room to breathe. Mixed mouldings still hold together because the mats match.",
+    "order": 50
+  },
+  "matte-frames-mat-border.jpg": {
+    "title": "Museum Line — Four Across",
+    "room": "Office",
+    "sizes": "50 × 70 cm",
+    "blurb": "Hung on a single centre line at 145 cm, evenly spaced. The most forgiving arrangement in any long room.",
+    "order": 51
+  },
+  "dining-salon-arrangement.jpg": {
+    "title": "Salon Arrangement — Dining",
+    "room": "Dining room",
+    "sizes": "Mixed, 20 × 25 to 50 × 70 cm",
+    "blurb": "A larger centre piece anchors six smaller frames. Symmetry at the edges keeps a mixed set from looking accidental.",
+    "order": 52
+  }
+}

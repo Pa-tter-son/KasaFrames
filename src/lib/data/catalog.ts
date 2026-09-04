@@ -53,7 +53,7 @@ export const collections: Collection[] = [
     subtitle: "Warm everyday luxury with a sculptural ring detail.",
     positioning: "Designed for modern Ghanaian homes seeking affordable luxury.",
     mood: "Welcoming, luminous, quietly bold.",
-    heroImage: "/gallery/black-frame-grid-six.jpg",
+    heroImage: "/media/gallery-wall/black-frame-grid-six.jpg",
     accent: "ring",
     stylingTips: [
       "Pair with warm neutrals and soft indirect lighting.",
@@ -69,7 +69,7 @@ export const collections: Collection[] = [
     subtitle: "Museum-grade presence for artworks and limited prints.",
     positioning: "Texture-forward presentation with a clean gallery edge.",
     mood: "Artistic, contemplative, refined.",
-    heroImage: "/gallery/canvas-wrap-quartet.jpg",
+    heroImage: "/media/canvas-wrap/canvas-wrap-quartet.jpg",
     accent: "canvas",
     stylingTips: [
       "Float above low consoles to create vertical breathing room.",
@@ -85,7 +85,7 @@ export const collections: Collection[] = [
     subtitle: "Architectural weight for staircases and family galleries.",
     positioning: "Bold edges that anchor classic and contemporary spaces alike.",
     mood: "Confident, structured, timeless.",
-    heroImage: "/gallery/framed-trio-mono.jpg",
+    heroImage: "/media/framed-matte/framed-trio-mono.jpg",
     accent: "thick",
     stylingTips: [
       "Stagger heights along stair flights for cinematic ascent.",
@@ -101,7 +101,7 @@ export const collections: Collection[] = [
     subtitle: "Ultra-thin edge engineering for statement pieces.",
     positioning: "Our elite line for galleries, penthouses, and signature walls.",
     mood: "Weightless, precise, gallery-private.",
-    heroImage: "/gallery/mounted-photo-panels.jpg",
+    heroImage: "/media/photo-block/mounted-photo-panels.jpg",
     accent: "float",
     stylingTips: [
       "Let negative wall space become part of the composition.",
@@ -124,10 +124,10 @@ export const products: Product[] = [
     longDescription:
       "Hand-finished wood body with a deep onyx ring accent. Calibrated for living rooms, bedrooms, and boutique hospitality. Each piece is inspected for edge uniformity and ring alignment before dispatch.",
     basePriceGhs: 890,
-    heroImage: "/gallery/matte-frames-mat-border.jpg",
+    heroImage: "/media/framed-matte/matte-frames-mat-border.jpg",
     gallery: [
-      "/gallery/heritage-family-wall.jpg",
-      "/gallery/photo-block-cluster.jpg",
+      "/media/gallery-wall/heritage-family-wall.jpg",
+      "/media/photo-block/photo-block-cluster.jpg",
     ],
     materials: ["wood", "composite"],
     finishes: ["matte-black", "gloss-charcoal"],
@@ -150,10 +150,10 @@ export const products: Product[] = [
     longDescription:
       "Micro-textured ring with controlled reflectance—never loud, always intentional. Ideal with sand, cream, and charcoal palettes.",
     basePriceGhs: 960,
-    heroImage: "/gallery/dining-salon-arrangement.jpg",
+    heroImage: "/media/framed-matte/dining-salon-arrangement.jpg",
     gallery: [
-      "/gallery/framed-trio-mono.jpg",
-      "/gallery/black-frame-grid-six.jpg",
+      "/media/framed-matte/framed-trio-mono.jpg",
+      "/media/gallery-wall/black-frame-grid-six.jpg",
     ],
     materials: ["wood"],
     finishes: ["warm-oak", "gold-accent"],
@@ -176,10 +176,10 @@ export const products: Product[] = [
     longDescription:
       "Structural backing with humidity-aware spacing for Ghana’s climate cycles. Finished with a whisper-thin face that keeps the art hero.",
     basePriceGhs: 1280,
-    heroImage: "/gallery/canvas-wrap-edge-detail.jpg",
+    heroImage: "/media/canvas-wrap/canvas-wrap-edge-detail.jpg",
     gallery: [
-      "/gallery/dining-salon-arrangement.jpg",
-      "/gallery/editorial-gallery-wall.jpg",
+      "/media/framed-matte/dining-salon-arrangement.jpg",
+      "/media/gallery-wall/editorial-gallery-wall.jpg",
     ],
     materials: ["composite", "wood"],
     finishes: ["matte-black", "gloss-charcoal"],
@@ -202,10 +202,10 @@ export const products: Product[] = [
     longDescription:
       "Reinforced corners and concealed fixing for high-traffic walls. Designed for cascading layouts with consistent sightlines.",
     basePriceGhs: 1100,
-    heroImage: "/gallery/corridor-salon-wall.jpg",
+    heroImage: "/media/gallery-wall/corridor-salon-wall.jpg",
     gallery: [
-      "/gallery/photo-block-cluster.jpg",
-      "/gallery/canvas-wrap-quartet.jpg",
+      "/media/photo-block/photo-block-cluster.jpg",
+      "/media/canvas-wrap/canvas-wrap-quartet.jpg",
     ],
     materials: ["wood", "metal-edge"],
     finishes: ["matte-black"],
@@ -228,10 +228,10 @@ export const products: Product[] = [
     longDescription:
       "Precision-milled edge with sub-millimeter tolerance. For statement photography, monochrome works, and gallery walls where silence is luxury.",
     basePriceGhs: 1680,
-    heroImage: "/gallery/statement-canvas-bedroom.jpg",
+    heroImage: "/media/canvas-wrap/statement-canvas-bedroom.jpg",
     gallery: [
-      "/gallery/black-frame-grid-six.jpg",
-      "/gallery/mounted-photo-panels.jpg",
+      "/media/gallery-wall/black-frame-grid-six.jpg",
+      "/media/photo-block/mounted-photo-panels.jpg",
     ],
     materials: ["metal-edge", "wood"],
     finishes: ["matte-black", "gloss-charcoal", "gold-accent"],

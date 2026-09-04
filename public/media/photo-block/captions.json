@@ -1,0 +1,23 @@
+{
+  "deep-inner-frame-trio.jpg": {
+    "title": "Deep Inner Frame — Trio",
+    "room": "Living room",
+    "sizes": "20 × 25 and 30 × 40 cm",
+    "blurb": "Blocks with a deep inner frame, so each print sits recessed behind its own edge and throws a shadow of its own.",
+    "order": 1
+  },
+  "photo-block-cluster.jpg": {
+    "title": "Photo Block Cluster",
+    "room": "Bedroom",
+    "sizes": "Mixed, 13 × 18 to 40 × 50 cm",
+    "blurb": "Frameless blocks in a loose grid. With no moulding you can hang far more of them before a wall feels heavy.",
+    "order": 50
+  },
+  "mounted-photo-panels.jpg": {
+    "title": "Mounted Panels — Travel Set",
+    "room": "Living room",
+    "sizes": "20 × 25 and 30 × 40 cm",
+    "blurb": "Mounted panels standing off the wall by a few millimetres. The shadow line is what makes them feel expensive.",
+    "order": 51
+  }
+}

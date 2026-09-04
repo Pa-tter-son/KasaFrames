@@ -1,0 +1,37 @@
+{
+  "corridor-canvas-oversize.jpg": {
+    "title": "Corridor Canvases — Oversize",
+    "room": "Office corridor",
+    "sizes": "90 × 120 cm",
+    "blurb": "Three oversize canvases down a working corridor. At this scale the wrap depth is what stops them reading as posters.",
+    "order": 1
+  },
+  "canvas-wrap-edge-vineyard.jpg": {
+    "title": "Wrapped Edge — Corner Detail",
+    "room": "Detail",
+    "sizes": "38 mm bar depth",
+    "blurb": "Corners folded by hand and the image carried around the return, so there is nothing raw to see from the side.",
+    "order": 2
+  },
+  "canvas-wrap-quartet.jpg": {
+    "title": "Canvas Quartet — Warm Neutrals",
+    "room": "Living room",
+    "sizes": "40 × 50 and 50 × 70 cm",
+    "blurb": "Four gallery-wrapped canvases hung tight, so the set reads as one field of colour rather than four pictures.",
+    "order": 50
+  },
+  "canvas-wrap-edge-detail.jpg": {
+    "title": "Wrapped Edge — Profile Study",
+    "room": "Detail",
+    "sizes": "38 mm bar depth",
+    "blurb": "The side view: image carried around a deep bar, no staples in sight from the front.",
+    "order": 51
+  },
+  "statement-canvas-bedroom.jpg": {
+    "title": "Statement Canvas — Bedroom",
+    "room": "Bedroom",
+    "sizes": "90 × 120 cm",
+    "blurb": "One oversized canvas centred over the bed. At this scale a single piece does more than a cluster ever could.",
+    "order": 52
+  }
+}

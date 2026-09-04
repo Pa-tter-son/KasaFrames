@@ -22,7 +22,7 @@ export default function AboutPage() {
       <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:items-center">
         <Reveal className="relative aspect-[16/12] overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
           <Image
-            src="/gallery/editorial-gallery-wall.jpg"
+            src="/media/gallery-wall/editorial-gallery-wall.jpg"
             alt="KasaFrames interior"
             fill
             className="object-cover"

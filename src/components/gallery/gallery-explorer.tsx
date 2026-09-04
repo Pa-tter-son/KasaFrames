@@ -8,10 +8,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Reveal } from "@/components/motion/reveal";
 import {
-  activeFamilies,
   familyLabel,
   familyMeta,
-  galleryItems,
+  finishFamilies,
   type FinishFamily,
   type GalleryItem,
 } from "@/lib/data/gallery";
@@ -20,9 +19,13 @@ import { MessageCircle, Search, X } from "lucide-react";
 
 type Filter = FinishFamily | "all";
 
-const families = activeFamilies();
+export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
+  // Only offer a filter for a finish that actually has photography behind it.
+  const families = useMemo(() => {
+    const present = new Set(items.map((i) => i.family));
+    return finishFamilies.filter((f) => present.has(f.key));
+  }, [items]);
 
-export function GalleryExplorer() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<GalleryItem | null>(null);
@@ -30,7 +33,7 @@ export function GalleryExplorer() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
 
-    return galleryItems.filter((item) => {
+    return items.filter((item) => {
       if (filter !== "all" && item.family !== filter) return false;
       if (!needle) return true;
 
@@ -39,7 +42,7 @@ export function GalleryExplorer() {
         .toLowerCase()
         .includes(needle);
     });
-  }, [filter, q]);
+  }, [filter, items, q]);
 
   const activeMeta = filter === "all" ? null : familyMeta(filter);
 
@@ -60,11 +63,11 @@ export function GalleryExplorer() {
         <div className="flex flex-wrap gap-2">
           <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
             All work
-            <span className="ml-2 text-[10px] opacity-60">{galleryItems.length}</span>
+            <span className="ml-2 text-[10px] opacity-60">{items.length}</span>
           </FilterChip>
 
           {families.map((f) => {
-            const count = galleryItems.filter((i) => i.family === f.key).length;
+            const count = items.filter((i) => i.family === f.key).length;
             return (
               <FilterChip key={f.key} active={filter === f.key} onClick={() => setFilter(f.key)}>
                 {f.label}

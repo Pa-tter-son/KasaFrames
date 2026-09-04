@@ -1,0 +1,16 @@
+{
+  "gloss-portrait-size-guide.jpg": {
+    "title": "Portrait Panels — Size Guide",
+    "room": "Studio",
+    "sizes": "12 × 16, 16 × 20 and 20 × 24 inches",
+    "blurb": "The three sizes stood side by side, because the question everyone asks first is how big it actually is. Photographed together so the jump between them reads honestly.",
+    "order": 1
+  },
+  "gloss-quote-panels.jpg": {
+    "title": "Gloss Quote Panels",
+    "room": "Studio",
+    "sizes": "12 × 16 to 20 × 24 inches",
+    "blurb": "Scripture and affirmation panels on high-gloss acrylic. The wet-look black is the whole point—it holds a room's light instead of flattening it.",
+    "order": 2
+  }
+}

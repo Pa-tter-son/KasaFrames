@@ -45,9 +45,9 @@ const STYLES: StyleMeta[] = [
 ];
 
 const SAMPLE_ROOMS = [
-  { id: "loft-sofa", label: "Loft lounge", src: "/rooms/loft-sofa.jpg", wallCm: 420 },
-  { id: "warm-sideboard", label: "Warm sideboard", src: "/rooms/warm-sideboard.jpg", wallCm: 380 },
-  { id: "lilac-lounge", label: "Lilac corner", src: "/rooms/lilac-lounge.jpg", wallCm: 300 },
+  { id: "loft-sofa", label: "Loft lounge", src: "/media/rooms/loft-sofa.jpg", wallCm: 420 },
+  { id: "warm-sideboard", label: "Warm sideboard", src: "/media/rooms/warm-sideboard.jpg", wallCm: 380 },
+  { id: "lilac-lounge", label: "Lilac corner", src: "/media/rooms/lilac-lounge.jpg", wallCm: 300 },
 ];
 
 interface Piece {

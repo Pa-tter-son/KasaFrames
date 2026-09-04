@@ -1,0 +1,44 @@
+{
+  "corridor-portrait-grid.jpg": {
+    "title": "Corridor Portrait Grid",
+    "room": "Corridor",
+    "sizes": "A4 and A3, black moulding",
+    "blurb": "Two columns of three on a narrow return wall. Mixed orientations still line up because the gaps and the outer edges are held constant.",
+    "order": 1
+  },
+  "black-frame-grid-nine.jpg": {
+    "title": "Nine-Frame Grid — Wide Mats",
+    "room": "Sitting room",
+    "sizes": "40 × 50 cm each",
+    "blurb": "A 3 × 3 grid with deep white mats. Grids are unforgiving—every gap here is measured, never eyeballed.",
+    "order": 2
+  },
+  "black-frame-grid-six.jpg": {
+    "title": "Six-Frame Grid — Above Seating",
+    "room": "Living room",
+    "sizes": "40 × 50 cm each",
+    "blurb": "Two rows of three, 5 cm apart, sized to sit within the sofa width.",
+    "order": 50
+  },
+  "corridor-salon-wall.jpg": {
+    "title": "Corridor Salon",
+    "room": "Corridor",
+    "sizes": "Mixed, 13 × 18 to 60 × 80 cm",
+    "blurb": "A dense salon hang down a passage. Mixed frame tones are held together by consistent gaps and one shared baseline.",
+    "order": 51
+  },
+  "editorial-gallery-wall.jpg": {
+    "title": "Editorial Wall — Mixed Media",
+    "room": "Retail / hospitality",
+    "sizes": "Mixed",
+    "blurb": "Frames, panels and objects composed into recessed bays, for a commercial space that needs to look considered from every angle.",
+    "order": 52
+  },
+  "heritage-family-wall.jpg": {
+    "title": "Heritage Wall — Family Archive",
+    "room": "Sitting room",
+    "sizes": "Mixed, 10 × 15 to 40 × 50 cm",
+    "blurb": "Decades of family photographs, rescued and reprinted, hung corner to corner. The most requested project we take on.",
+    "order": 53
+  }
+}

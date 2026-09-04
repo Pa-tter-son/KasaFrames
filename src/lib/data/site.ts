@@ -63,7 +63,7 @@ export const portfolioItems = [
     title: "Cream Living — Ring Pair",
     category: "Living rooms",
     image:
-      "/gallery/editorial-gallery-wall.jpg",
+      "/media/gallery-wall/editorial-gallery-wall.jpg",
     span: "lg:col-span-2 lg:row-span-2",
   },
   {
@@ -71,7 +71,7 @@ export const portfolioItems = [
     title: "Stair Noir Cascade",
     category: "Staircases",
     image:
-      "/gallery/corridor-salon-wall.jpg",
+      "/media/gallery-wall/corridor-salon-wall.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -79,7 +79,7 @@ export const portfolioItems = [
     title: "Office Horizon Float",
     category: "Offices",
     image:
-      "/gallery/heritage-family-wall.jpg",
+      "/media/gallery-wall/heritage-family-wall.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -87,7 +87,7 @@ export const portfolioItems = [
     title: "Bedroom Atelier Canvas",
     category: "Bedrooms",
     image:
-      "/gallery/framed-trio-mono.jpg",
+      "/media/framed-matte/framed-trio-mono.jpg",
     span: "lg:col-span-2",
   },
   {
@@ -95,7 +95,7 @@ export const portfolioItems = [
     title: "Restaurant Warm Aurum",
     category: "Restaurants",
     image:
-      "/gallery/canvas-wrap-quartet.jpg",
+      "/media/canvas-wrap/canvas-wrap-quartet.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -103,7 +103,7 @@ export const portfolioItems = [
     title: "Salon Editorial Grid",
     category: "Beauty salons",
     image:
-      "/gallery/photo-block-cluster.jpg",
+      "/media/photo-block/photo-block-cluster.jpg",
     span: "lg:col-span-1 lg:row-span-2",
   },
   {
@@ -111,7 +111,7 @@ export const portfolioItems = [
     title: "Airbnb Osu — Quiet Statement",
     category: "Airbnb setups",
     image:
-      "/gallery/black-frame-grid-six.jpg",
+      "/media/gallery-wall/black-frame-grid-six.jpg",
     span: "lg:col-span-2",
   },
 ];
@@ -119,16 +119,16 @@ export const portfolioItems = [
 export const beforeAfter = [
   {
     before:
-      "/gallery/statement-canvas-bedroom.jpg",
+      "/media/canvas-wrap/statement-canvas-bedroom.jpg",
     after:
-      "/gallery/mounted-photo-panels.jpg",
+      "/media/photo-block/mounted-photo-panels.jpg",
     caption: "Living wall · Ring pair composition",
   },
   {
     before:
-      "/gallery/dining-salon-arrangement.jpg",
+      "/media/framed-matte/dining-salon-arrangement.jpg",
     after:
-      "/gallery/matte-frames-mat-border.jpg",
+      "/media/framed-matte/matte-frames-mat-border.jpg",
     caption: "Stairwell · Thick edge cascade",
   },
 ];

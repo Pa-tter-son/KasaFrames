@@ -11,7 +11,7 @@ export function InstallShowcase() {
       <div className="grid items-center gap-10 lg:grid-cols-2">
         <Reveal className="relative aspect-[16/12] overflow-hidden rounded-[2rem] border border-kasa-black/10 shadow-lift dark:border-white/10">
           <Image
-            src="/gallery/corridor-salon-wall.jpg"
+            src="/media/gallery-wall/corridor-salon-wall.jpg"
             alt="Professional installation"
             fill
             className="object-cover"

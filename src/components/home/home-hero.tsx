@@ -11,7 +11,7 @@ export function HomeHero() {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         <Image
-          src="/gallery/editorial-gallery-wall.jpg"
+          src="/media/gallery-wall/editorial-gallery-wall.jpg"
           alt="Luxury interior wall with curated frames"
           fill
           priority
