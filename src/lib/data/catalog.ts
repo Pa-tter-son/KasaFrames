@@ -1,3 +1,13 @@
+/**
+ * The four frame types Kasa Frames sells, with the price tables from the
+ * business plan.
+ *
+ * Prices are per frame in GHS, quoted by size in inches, exactly as the studio
+ * quotes them. Installation is a flat GHS 100 per frame on top. Nothing here is
+ * derived or interpolated—if a size is not in the table, we do not quote it
+ * without asking the studio.
+ */
+
 export type CollectionSlug =
   | "wooden-glossy-ring"
   | "canvas-mount"
@@ -5,14 +15,44 @@ export type CollectionSlug =
   | "float-frames";
 
 export type ProductId =
-  | "wg-black-60"
-  | "wg-gold-60"
-  | "cm-gallery-80"
-  | "tb-stair-90"
-  | "ff-statement-70";
+  | "wooden-glossy-ring"
+  | "canvas-mount"
+  | "black-frame-thick"
+  | "float-frame-thin";
 
-export type FrameMaterial = "wood" | "composite" | "metal-edge";
-export type FrameFinish = "matte-black" | "warm-oak" | "gloss-charcoal" | "gold-accent";
+export type FrameMaterial = "gloss-board" | "canvas" | "wood";
+
+export type FrameFinish =
+  | "plain"
+  | "ring-black"
+  | "ring-gold"
+  | "canvas-wrap"
+  | "black-mat"
+  | "float-shadow";
+
+export const materialLabels: Record<FrameMaterial, string> = {
+  "gloss-board": "Gloss-mounted board",
+  canvas: "Stretched canvas",
+  wood: "Timber moulding",
+};
+
+export const finishLabels: Record<FrameFinish, string> = {
+  plain: "Plain — borderless",
+  "ring-black": "Ring — black",
+  "ring-gold": "Ring — gold",
+  "canvas-wrap": "Wrapped edge",
+  "black-mat": "Black with white mat",
+  "float-shadow": "Float with shadow gap",
+};
+
+export interface FrameSize {
+  /** As the studio quotes it, in inches. */
+  label: string;
+  widthIn: number;
+  heightIn: number;
+  /** Frame price in GHS, before installation. */
+  frameGhs: number;
+}
 
 export interface Product {
   id: ProductId;
@@ -22,15 +62,15 @@ export interface Product {
   collection: CollectionSlug;
   description: string;
   longDescription: string;
-  basePriceGhs: number;
   heroImage: string;
   gallery: string[];
   materials: FrameMaterial[];
   finishes: FrameFinish[];
-  sizesCm: { label: string; w: number; h: number; priceDelta: number }[];
+  sizes: FrameSize[];
   highlights: string[];
   idealFor: string[];
-  installationAddOnGhs: number;
+  /** Flat per-frame installation charge. GHS 100 across every type. */
+  installationGhs: number;
 }
 
 export interface Collection {
@@ -46,203 +86,229 @@ export interface Collection {
   products: ProductId[];
 }
 
+export const INSTALLATION_GHS = 100;
+
+/** Deposit taken before an order goes to the manufacturer. */
+export const DEPOSIT_RATE = 0.5;
+
 export const collections: Collection[] = [
   {
     slug: "wooden-glossy-ring",
     title: "Wooden Glossy + Ring",
-    subtitle: "Warm everyday luxury with a sculptural ring detail.",
-    positioning: "Designed for modern Ghanaian homes seeking affordable luxury.",
-    mood: "Welcoming, luminous, quietly bold.",
-    heroImage: "/media/gallery-wall/black-frame-grid-six.jpg",
+    subtitle: "High-gloss prints, with or without a decorative ring border.",
+    positioning: "The most popular and accessible type in the collection.",
+    mood: "Vibrant, warm, quietly premium.",
+    heroImage: "/media/acrylic-gloss/gloss-portrait-size-guide.jpg",
     accent: "ring",
     stylingTips: [
-      "Pair with warm neutrals and soft indirect lighting.",
-      "Use pairs in hallways for rhythm and balance.",
-      "Layer with textured linen curtains for depth.",
+      "Gloss reads best on a wall that gets indirect light—direct sun turns it into a mirror.",
+      "The ring border does the work of a frame without the bulk; keep the wall around it plain.",
+      "Portraits gain most from gloss: skin tones stay warm and the blacks stay deep.",
     ],
-    layoutIdeas: ["Symmetrical pairs", "Triptych rhythm", "Single hero statement"],
-    products: ["wg-black-60", "wg-gold-60"],
+    layoutIdeas: ["Portrait trio, stepped by size", "Faith or affirmation panel set", "Adinkra symbol series"],
+    products: ["wooden-glossy-ring"],
   },
   {
     slug: "canvas-mount",
     title: "Canvas Mount",
-    subtitle: "Museum-grade presence for artworks and limited prints.",
-    positioning: "Texture-forward presentation with a clean gallery edge.",
-    mood: "Artistic, contemplative, refined.",
+    subtitle: "Printed on canvas and wrapped around a deep board. No glass, no border.",
+    positioning: "For clients who want a wall that reads as a curated gallery.",
+    mood: "Textural, gallery-like, generous.",
     heroImage: "/media/canvas-wrap/canvas-wrap-quartet.jpg",
     accent: "canvas",
     stylingTips: [
-      "Float above low consoles to create vertical breathing room.",
-      "Combine with matte walls for maximum contrast control.",
-      "Use directional spots at 30° for even wash.",
+      "Canvas takes the glare out of a bright room—it is the safest choice opposite a window.",
+      "Go one size larger than feels comfortable; canvas without a frame reads smaller than it measures.",
+      "The wrap carries the image around the sides, so leave a little breathing room at the edges of the artwork.",
     ],
-    layoutIdeas: ["Salon wall grid", "Single oversized canvas", "Asymmetric stack"],
-    products: ["cm-gallery-80"],
+    layoutIdeas: ["Single oversized statement", "Quartet hung tight as one field", "Landscape pair over a sideboard"],
+    products: ["canvas-mount"],
   },
   {
     slug: "thick-edge-black",
-    title: "Thick Edge Black",
-    subtitle: "Architectural weight for staircases and family galleries.",
-    positioning: "Bold edges that anchor classic and contemporary spaces alike.",
-    mood: "Confident, structured, timeless.",
-    heroImage: "/media/framed-matte/framed-trio-mono.jpg",
+    title: "Black Frame — Thick Edge",
+    subtitle: "A bold black moulding with glass and a white mat inside.",
+    positioning: "The most requested type for staircase and grid walls in Accra.",
+    mood: "Structured, timeless, architectural.",
+    heroImage: "/media/gallery-wall/corridor-portrait-grid.jpg",
     accent: "thick",
     stylingTips: [
-      "Stagger heights along stair flights for cinematic ascent.",
-      "Mix portrait and landscape for editorial rhythm.",
-      "Keep mat borders generous for a couture feel.",
+      "The white mat is what makes it look considered—never crop it out to save cost.",
+      "On a staircase, set out from the stair nosing, not the floor, so the line climbs true.",
+      "Matching frames in a grid forgive almost any mix of images inside them.",
     ],
-    layoutIdeas: ["Staircase cascade", "Chronological family story", "Office credenza grid"],
-    products: ["tb-stair-90"],
+    layoutIdeas: ["Staircase cascade", "3 × 3 grid", "Black and white portrait corridor"],
+    products: ["black-frame-thick"],
   },
   {
     slug: "float-frames",
-    title: "Float Frames",
-    subtitle: "Ultra-thin edge engineering for statement pieces.",
-    positioning: "Our elite line for galleries, penthouses, and signature walls.",
-    mood: "Weightless, precise, gallery-private.",
+    title: "Float Frame — Thin Edge",
+    subtitle: "A slim frame that lifts the artwork off the wall and casts a shadow behind it.",
+    positioning: "The most premium type we offer.",
+    mood: "Contemporary, elevated, magazine-ready.",
     heroImage: "/media/photo-block/mounted-photo-panels.jpg",
     accent: "float",
     stylingTips: [
-      "Let negative wall space become part of the composition.",
-      "Use with large-format photography or monochrome art.",
-      "Keep adjacent furniture low to preserve sightlines.",
+      "The shadow gap is the whole effect—hang it where side light can find it.",
+      "One float frame on a clean wall outperforms three of anything else.",
+      "Keep surrounding decor minimal; the lift needs empty wall to read against.",
     ],
-    layoutIdeas: ["Single museum float", "Linear horizon trio", "Corner pivot"],
-    products: ["ff-statement-70"],
+    layoutIdeas: ["Single hero piece", "Pair flanking a doorway", "Large-format print above seating"],
+    products: ["float-frame-thin"],
   },
 ];
 
 export const products: Product[] = [
   {
-    id: "wg-black-60",
-    slug: "wooden-glossy-ring-black-60",
-    name: "Glossy Ring — Onyx",
-    tagline: "Black ring detail. Warm wood tone body.",
+    id: "wooden-glossy-ring",
+    slug: "wooden-glossy-ring",
+    name: "Wooden Glossy + Ring",
+    tagline: "High-gloss print, plain or with a black or gold ring border.",
     collection: "wooden-glossy-ring",
-    description: "A sculptural ring floats your artwork forward with soft, directional depth.",
+    description:
+      "A high-gloss printed photo or artwork mounted on board. Highly reflective, with vibrant, sharp colour.",
     longDescription:
-      "Hand-finished wood body with a deep onyx ring accent. Calibrated for living rooms, bedrooms, and boutique hospitality. Each piece is inspected for edge uniformity and ring alignment before dispatch.",
-    basePriceGhs: 890,
-    heroImage: "/media/framed-matte/matte-frames-mat-border.jpg",
-    gallery: [
-      "/media/gallery-wall/heritage-family-wall.jpg",
-      "/media/photo-block/photo-block-cluster.jpg",
+      "Comes two ways: plain, which is borderless with just the glossy print itself, or with ring—the same print carrying a thin decorative border in black or gold, which gives a framed finish without a traditional frame. It is the most popular and accessible type we offer, and the one families choose most often for portraits.",
+    heroImage: "/media/acrylic-gloss/gloss-portrait-size-guide.jpg",
+    gallery: ["/media/acrylic-gloss/gloss-quote-panels.jpg", "/media/acrylic-gloss/gloss-portrait-size-guide.jpg"],
+    materials: ["gloss-board"],
+    finishes: ["plain", "ring-black", "ring-gold"],
+    sizes: [
+      { label: '9 × 12', widthIn: 9, heightIn: 12, frameGhs: 150 },
+      { label: '12 × 16', widthIn: 12, heightIn: 16, frameGhs: 200 },
+      { label: '16 × 20', widthIn: 16, heightIn: 20, frameGhs: 250 },
+      { label: '20 × 24', widthIn: 20, heightIn: 24, frameGhs: 350 },
+      { label: '20 × 30', widthIn: 20, heightIn: 30, frameGhs: 400 },
+      { label: '24 × 30', widthIn: 24, heightIn: 30, frameGhs: 550 },
+      { label: '24 × 36', widthIn: 24, heightIn: 36, frameGhs: 600 },
     ],
-    materials: ["wood", "composite"],
-    finishes: ["matte-black", "gloss-charcoal"],
-    sizesCm: [
-      { label: '50 × 70', w: 50, h: 70, priceDelta: 0 },
-      { label: '60 × 80', w: 60, h: 80, priceDelta: 220 },
-      { label: '70 × 100', w: 70, h: 100, priceDelta: 480 },
+    highlights: [
+      "Vibrant, sharp colour from a true gloss finish",
+      "Ring border in black or gold, or plain and borderless",
+      "The most accessible entry point in the collection",
     ],
-    highlights: ["Ring-forward depth", "Anti-glare glazing option", "Reinforced hanging system"],
-    idealFor: ["Family homes", "Airbnb living walls", "Bedroom suites"],
-    installationAddOnGhs: 150,
+    idealFor: [
+      "Personal and family portrait photography",
+      "Faith-based and motivational quotes",
+      "Cultural and Adinkra symbol artwork",
+    ],
+    installationGhs: INSTALLATION_GHS,
   },
   {
-    id: "wg-gold-60",
-    slug: "wooden-glossy-ring-gold-60",
-    name: "Glossy Ring — Aurum",
-    tagline: "Gold ring highlight for luminous interiors.",
-    collection: "wooden-glossy-ring",
-    description: "Warm metallic ring detail that catches Accra’s golden hour beautifully.",
+    id: "canvas-mount",
+    slug: "canvas-mount",
+    name: "Canvas Mount",
+    tagline: "Printed on canvas, wrapped around a deep board. No glass, no border.",
+    collection: "canvas-mount",
+    description:
+      "The image is printed onto canvas and stretched over a thick board, with the print wrapping around the sides.",
     longDescription:
-      "Micro-textured ring with controlled reflectance—never loud, always intentional. Ideal with sand, cream, and charcoal palettes.",
-    basePriceGhs: 960,
-    heroImage: "/media/framed-matte/dining-salon-arrangement.jpg",
+      "There is no glass and no traditional frame border, which gives canvas a bold, three-dimensional presence on the wall. The texture adds warmth and depth, so the piece reads as artwork rather than a photograph. It is the preferred choice for clients who want their walls to feel like a curated gallery.",
+    heroImage: "/media/canvas-wrap/canvas-wrap-quartet.jpg",
     gallery: [
-      "/media/framed-matte/framed-trio-mono.jpg",
+      "/media/canvas-wrap/canvas-wrap-edge-detail.jpg",
+      "/media/canvas-wrap/statement-canvas-bedroom.jpg",
+    ],
+    materials: ["canvas"],
+    finishes: ["canvas-wrap"],
+    sizes: [
+      { label: '9 × 12', widthIn: 9, heightIn: 12, frameGhs: 200 },
+      { label: '12 × 16', widthIn: 12, heightIn: 16, frameGhs: 250 },
+      { label: '16 × 20', widthIn: 16, heightIn: 20, frameGhs: 350 },
+      { label: '20 × 24', widthIn: 20, heightIn: 24, frameGhs: 400 },
+      { label: '20 × 30', widthIn: 20, heightIn: 30, frameGhs: 550 },
+      { label: '24 × 30', widthIn: 24, heightIn: 30, frameGhs: 700 },
+      { label: '24 × 36', widthIn: 24, heightIn: 36, frameGhs: 700 },
+    ],
+    highlights: [
+      "Image carried around the sides of a deep board",
+      "No glass, so no glare in a bright room",
+      "Canvas texture adds warmth and depth",
+    ],
+    idealFor: [
+      "Landscape and nature artwork",
+      "Abstract and contemporary prints",
+      "Large statement pieces in living rooms and lobbies",
+    ],
+    installationGhs: INSTALLATION_GHS,
+  },
+  {
+    id: "black-frame-thick",
+    slug: "black-frame-thick-edge",
+    name: "Black Frame — Thick Edge",
+    tagline: "Bold black moulding, glass, and a white mat inside.",
+    collection: "thick-edge-black",
+    description:
+      "A chunky black border frame with glass and white matting—an inner white border between the frame and the photo.",
+    longDescription:
+      "The thick edge gives it a strong, classic presence, and grouped together these frames create a powerful gallery wall. It is one of the most requested types for staircases in Accra, where a row of matching black frames ascending the wall makes a dramatic, intentional impression. The white mat adds breathing room around the image and lifts the whole finish.",
+    heroImage: "/media/gallery-wall/corridor-portrait-grid.jpg",
+    gallery: [
       "/media/gallery-wall/black-frame-grid-six.jpg",
+      "/media/staircase/stair-cascade-quotes.jpg",
     ],
     materials: ["wood"],
-    finishes: ["warm-oak", "gold-accent"],
-    sizesCm: [
-      { label: '50 × 70', w: 50, h: 70, priceDelta: 0 },
-      { label: '60 × 80', w: 60, h: 80, priceDelta: 240 },
-      { label: '70 × 100', w: 70, h: 100, priceDelta: 520 },
+    finishes: ["black-mat"],
+    sizes: [
+      { label: '6 × 8', widthIn: 6, heightIn: 8, frameGhs: 100 },
+      { label: '8 × 10', widthIn: 8, heightIn: 10, frameGhs: 150 },
+      { label: '8 × 12', widthIn: 8, heightIn: 12, frameGhs: 200 },
+      { label: '12 × 16', widthIn: 12, heightIn: 16, frameGhs: 250 },
+      { label: '16 × 20', widthIn: 16, heightIn: 20, frameGhs: 400 },
+      { label: '20 × 24', widthIn: 20, heightIn: 24, frameGhs: 500 },
+      { label: '20 × 30', widthIn: 20, heightIn: 30, frameGhs: 550 },
+      { label: '24 × 30', widthIn: 24, heightIn: 30, frameGhs: 700 },
+      { label: '24 × 36', widthIn: 24, heightIn: 36, frameGhs: 800 },
+      { label: '30 × 40', widthIn: 30, heightIn: 40, frameGhs: 1300 },
     ],
-    highlights: ["Controlled metallic reflectance", "Archival mounting", "Soft-touch edges"],
-    idealFor: ["Dining rooms", "Salons", "Boutique retail"],
-    installationAddOnGhs: 150,
+    highlights: [
+      "Glass and a white mat as standard",
+      "Matching frames make a grid or staircase read as one piece",
+      "The most requested type for stair walls",
+    ],
+    idealFor: [
+      "Staircase gallery walls following the angle of the stairs",
+      "Grid gallery walls in living rooms and hallways",
+      "Black and white photography, and corporate reception areas",
+    ],
+    installationGhs: INSTALLATION_GHS,
   },
   {
-    id: "cm-gallery-80",
-    slug: "canvas-mount-gallery-80",
-    name: "Canvas Mount — Atelier",
-    tagline: "Gallery tension. Museum silence.",
-    collection: "canvas-mount",
-    description: "Canvas-forward mount that elevates originals and fine art prints.",
-    longDescription:
-      "Structural backing with humidity-aware spacing for Ghana’s climate cycles. Finished with a whisper-thin face that keeps the art hero.",
-    basePriceGhs: 1280,
-    heroImage: "/media/canvas-wrap/canvas-wrap-edge-detail.jpg",
-    gallery: [
-      "/media/framed-matte/dining-salon-arrangement.jpg",
-      "/media/gallery-wall/editorial-gallery-wall.jpg",
-    ],
-    materials: ["composite", "wood"],
-    finishes: ["matte-black", "gloss-charcoal"],
-    sizesCm: [
-      { label: '60 × 80', w: 60, h: 80, priceDelta: 0 },
-      { label: '80 × 100', w: 80, h: 100, priceDelta: 360 },
-      { label: '90 × 120', w: 90, h: 120, priceDelta: 720 },
-    ],
-    highlights: ["Climate-aware spacing", "Museum presentation", "Optional UV glazing"],
-    idealFor: ["Studios", "Offices", "Collector homes"],
-    installationAddOnGhs: 200,
-  },
-  {
-    id: "tb-stair-90",
-    slug: "thick-edge-black-stair-90",
-    name: "Thick Edge — Noir Cascade",
-    tagline: "Bold massing for stair galleries and family chronologies.",
-    collection: "thick-edge-black",
-    description: "Deep black edge profile engineered for rhythm along vertical circulation.",
-    longDescription:
-      "Reinforced corners and concealed fixing for high-traffic walls. Designed for cascading layouts with consistent sightlines.",
-    basePriceGhs: 1100,
-    heroImage: "/media/gallery-wall/corridor-salon-wall.jpg",
-    gallery: [
-      "/media/photo-block/photo-block-cluster.jpg",
-      "/media/canvas-wrap/canvas-wrap-quartet.jpg",
-    ],
-    materials: ["wood", "metal-edge"],
-    finishes: ["matte-black"],
-    sizesCm: [
-      { label: '40 × 50', w: 40, h: 50, priceDelta: -120 },
-      { label: '50 × 70', w: 50, h: 70, priceDelta: 0 },
-      { label: '60 × 90', w: 60, h: 90, priceDelta: 280 },
-    ],
-    highlights: ["Stair-optimized fixing", "Edge massing control", "Chronology-friendly grid"],
-    idealFor: ["Stairwells", "Family walls", "Classic interiors"],
-    installationAddOnGhs: 220,
-  },
-  {
-    id: "ff-statement-70",
-    slug: "float-frame-statement-70",
-    name: "Float — Horizon Line",
-    tagline: "Paper-thin edge. Maximum levitation.",
+    id: "float-frame-thin",
+    slug: "float-frame-thin-edge",
+    name: "Float Frame — Thin Edge",
+    tagline: "A slim frame that lifts the artwork off the wall.",
     collection: "float-frames",
-    description: "Our architectural float system—barely there, entirely unforgettable.",
+    description:
+      "A minimal frame where the artwork sits inside with a small visible gap between the image and the thin border.",
     longDescription:
-      "Precision-milled edge with sub-millimeter tolerance. For statement photography, monochrome works, and gallery walls where silence is luxury.",
-    basePriceGhs: 1680,
-    heroImage: "/media/canvas-wrap/statement-canvas-bedroom.jpg",
-    gallery: [
-      "/media/gallery-wall/black-frame-grid-six.jpg",
-      "/media/photo-block/mounted-photo-panels.jpg",
+      "The frame is engineered to sit slightly off the wall, casting a soft shadow behind it and giving the artwork a lifted, three-dimensional appearance—the popping effect. It is the most premium type we offer, and the one that turns a wall into a statement rather than a display.",
+    heroImage: "/media/photo-block/mounted-photo-panels.jpg",
+    gallery: ["/media/photo-block/photo-block-cluster.jpg", "/media/framed-matte/framed-trio-mono.jpg"],
+    materials: ["wood"],
+    finishes: ["float-shadow"],
+    sizes: [
+      { label: '8 × 10', widthIn: 8, heightIn: 10, frameGhs: 150 },
+      { label: '8 × 12', widthIn: 8, heightIn: 12, frameGhs: 200 },
+      { label: '12 × 16', widthIn: 12, heightIn: 16, frameGhs: 300 },
+      { label: '16 × 20', widthIn: 16, heightIn: 20, frameGhs: 400 },
+      { label: '20 × 24', widthIn: 20, heightIn: 24, frameGhs: 550 },
+      { label: '20 × 30', widthIn: 20, heightIn: 30, frameGhs: 600 },
+      { label: '24 × 30', widthIn: 24, heightIn: 30, frameGhs: 800 },
+      { label: '24 × 36', widthIn: 24, heightIn: 36, frameGhs: 850 },
+      { label: '30 × 40', widthIn: 30, heightIn: 40, frameGhs: 1400 },
     ],
-    materials: ["metal-edge", "wood"],
-    finishes: ["matte-black", "gloss-charcoal", "gold-accent"],
-    sizesCm: [
-      { label: '60 × 80', w: 60, h: 80, priceDelta: 0 },
-      { label: '70 × 100', w: 70, h: 100, priceDelta: 420 },
-      { label: '80 × 120', w: 80, h: 120, priceDelta: 880 },
+    highlights: [
+      "The popping effect: artwork lifted off the wall, shadow behind",
+      "Thin edge that never competes with the image",
+      "Our most premium finish",
     ],
-    highlights: ["Sub-mm edge tolerance", "Invisible hanging", "Curator-grade alignment"],
-    idealFor: ["Penthouses", "Galleries", "Executive suites"],
-    installationAddOnGhs: 280,
+    idealFor: [
+      "Statement pieces and hero walls",
+      "High-end contemporary gallery projects",
+      "Abstract art, portraits, and large-format prints",
+    ],
+    installationGhs: INSTALLATION_GHS,
   },
 ];
 
@@ -256,4 +322,15 @@ export function getProduct(id: string) {
 
 export function getProductsByCollection(slug: CollectionSlug) {
   return products.filter((p) => p.collection === slug);
+}
+
+export function getSize(product: Product, label: string) {
+  return product.sizes.find((s) => s.label === label);
+}
+
+/** Frame price plus installation, for one frame of this size. */
+export function totalPerFrame(product: Product, label: string, installation: boolean) {
+  const size = getSize(product, label);
+  if (!size) return 0;
+  return size.frameGhs + (installation ? product.installationGhs : 0);
 }

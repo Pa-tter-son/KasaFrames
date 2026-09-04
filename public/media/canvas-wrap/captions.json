@@ -1,18 +1,4 @@
 {
-  "corridor-canvas-oversize.jpg": {
-    "title": "Corridor Canvases — Oversize",
-    "room": "Office corridor",
-    "sizes": "90 × 120 cm",
-    "blurb": "Three oversize canvases down a working corridor. At this scale the wrap depth is what stops them reading as posters.",
-    "order": 1
-  },
-  "canvas-wrap-edge-vineyard.jpg": {
-    "title": "Wrapped Edge — Corner Detail",
-    "room": "Detail",
-    "sizes": "38 mm bar depth",
-    "blurb": "Corners folded by hand and the image carried around the return, so there is nothing raw to see from the side.",
-    "order": 2
-  },
   "canvas-wrap-quartet.jpg": {
     "title": "Canvas Quartet — Warm Neutrals",
     "room": "Living room",

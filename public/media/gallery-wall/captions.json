@@ -6,13 +6,6 @@
     "blurb": "Two columns of three on a narrow return wall. Mixed orientations still line up because the gaps and the outer edges are held constant.",
     "order": 1
   },
-  "black-frame-grid-nine.jpg": {
-    "title": "Nine-Frame Grid — Wide Mats",
-    "room": "Sitting room",
-    "sizes": "40 × 50 cm each",
-    "blurb": "A 3 × 3 grid with deep white mats. Grids are unforgiving—every gap here is measured, never eyeballed.",
-    "order": 2
-  },
   "black-frame-grid-six.jpg": {
     "title": "Six-Frame Grid — Above Seating",
     "room": "Living room",

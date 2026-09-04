@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import type { FrameFinish, FrameMaterial, Product } from "@/lib/data/catalog";
+import {
+  finishLabels,
+  materialLabels,
+  type FrameFinish,
+  type FrameMaterial,
+  type Product,
+} from "@/lib/data/catalog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -18,36 +24,23 @@ import { formatGhs, whatsappLink } from "@/lib/utils";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 
-const finishLabels: Record<FrameFinish, string> = {
-  "matte-black": "Matte black",
-  "warm-oak": "Warm oak",
-  "gloss-charcoal": "Gloss charcoal",
-  "gold-accent": "Gold accent",
-};
-
-const materialLabels: Record<FrameMaterial, string> = {
-  wood: "Engineered wood",
-  composite: "Archival composite",
-  "metal-edge": "Metal edge",
-};
-
 export function ProductConfigurator({ product }: { product: Product }) {
   const { addLine } = useCart();
-  const [sizeLabel, setSizeLabel] = useState(product.sizesCm[0]?.label ?? "");
+  const [sizeLabel, setSizeLabel] = useState(product.sizes[0]?.label ?? "");
   const [material, setMaterial] = useState<FrameMaterial>(product.materials[0] ?? "wood");
-  const [finish, setFinish] = useState<FrameFinish>(product.finishes[0] ?? "matte-black");
+  const [finish, setFinish] = useState<FrameFinish>(product.finishes[0] ?? "plain");
   const [installation, setInstallation] = useState(false);
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(product.heroImage);
 
   const selectedSize = useMemo(
-    () => product.sizesCm.find((s) => s.label === sizeLabel) ?? product.sizesCm[0],
-    [product.sizesCm, sizeLabel],
+    () => product.sizes.find((s) => s.label === sizeLabel) ?? product.sizes[0],
+    [product.sizes, sizeLabel],
   );
 
-  const price = product.basePriceGhs + (selectedSize?.priceDelta ?? 0);
+  const price = selectedSize?.frameGhs ?? 0;
 
-  const installationFee = installation ? product.installationAddOnGhs : 0;
+  const installationFee = installation ? product.installationGhs : 0;
 
   return (
     <div className="grid gap-12 lg:grid-cols-12">
@@ -92,9 +85,9 @@ export function ProductConfigurator({ product }: { product: Product }) {
                   <SelectValue placeholder="Choose size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {product.sizesCm.map((s) => (
+                  {product.sizes.map((s) => (
                     <SelectItem key={s.label} value={s.label}>
-                      {s.label} {s.priceDelta !== 0 ? `(${s.priceDelta > 0 ? "+" : ""}${formatGhs(s.priceDelta)})` : ""}
+                      {s.label} in · {formatGhs(s.frameGhs)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -136,7 +129,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
             <label className="flex items-center justify-between gap-4 rounded-2xl border border-kasa-black/10 bg-kasa-cream/60 px-4 py-3 text-sm dark:border-white/10 dark:bg-kasa-black/40">
               <span>
                 <span className="font-medium">White-glove installation</span>
-                <span className="mt-1 block text-xs text-kasa-muted">+ {formatGhs(product.installationAddOnGhs)}</span>
+                <span className="mt-1 block text-xs text-kasa-muted">+ {formatGhs(product.installationGhs)}</span>
               </span>
               <input
                 type="checkbox"
@@ -170,7 +163,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
                     material,
                     finish,
                     installation,
-                    installationGhs: product.installationAddOnGhs,
+                    installationGhs: product.installationGhs,
                     qty,
                   })
                 }

@@ -36,3 +36,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal business documents — never publish (margins, supplier costs, projections)
+*.docx
+*.xlsx

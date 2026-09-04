@@ -112,5 +112,16 @@ export function loadGalleryItems(): GalleryItem[] {
 
   return items
     .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title))
-    .map(({ order: _order, ...item }) => item);
+    .map(
+      (item): GalleryItem => ({
+        id: item.id,
+        title: item.title,
+        family: item.family,
+        room: item.room,
+        sizes: item.sizes,
+        blurb: item.blurb,
+        image: item.image,
+        ratio: item.ratio,
+      }),
+    );
 }

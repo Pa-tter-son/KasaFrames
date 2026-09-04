@@ -11,6 +11,7 @@ const footerNav = [
   { href: "/installation", label: "Installation" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
+  { href: "/policies", label: "How we work" },
 ];
 
 export function SiteFooter() {

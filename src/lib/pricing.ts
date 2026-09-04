@@ -67,7 +67,7 @@ export function priceCart(input: unknown): { cart: PricedCart } | { error: strin
       return { error: `Line ${position} refers to a product we no longer carry.` };
     }
 
-    const size = product.sizesCm.find((s) => s.label === line.sizeLabel);
+    const size = product.sizes.find((s) => s.label === line.sizeLabel);
     if (!size) {
       return { error: `${product.name} is not available in that size.` };
     }
@@ -88,8 +88,8 @@ export function priceCart(input: unknown): { cart: PricedCart } | { error: strin
     }
 
     const installation = line.installation === true;
-    const unitGhs = product.basePriceGhs + size.priceDelta;
-    const installationGhs = installation ? product.installationAddOnGhs : 0;
+    const unitGhs = size.frameGhs;
+    const installationGhs = installation ? product.installationGhs : 0;
 
     lines.push({
       productId: product.id,
