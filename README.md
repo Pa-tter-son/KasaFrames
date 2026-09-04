@@ -75,10 +75,46 @@ Two caveats worth knowing:
 - The consultation form records how many photos the visitor selected but does not upload them—that
   needs the object-storage step below.
 
+### `POST /api/cart/checkout` — implemented
+
+Starts a Paystack transaction for the cart and returns `{ authorizationUrl, reference, amountGhs }`;
+the cart drawer redirects the browser there. Body is `{ email, lines: [{ productId, sizeLabel,
+material, finish, installation, qty }] }`.
+
+**The client never sends an amount.** `priceCart()` in `src/lib/pricing.ts` recomputes every price
+from the catalog and rejects configurations the product doesn't offer, so a tampered cart in
+localStorage can't change what gets charged. Line items cap at 20, quantity at 20 per line.
+
+Responses: `201`, `400` (bad email, empty cart, unavailable configuration), `502` (Paystack
+unreachable), or `503` when `PAYSTACK_SECRET_KEY` is unset—the drawer then tells the customer to
+WhatsApp instead, so the site stays usable before keys are added.
+
+### `POST /api/webhooks/paystack` — implemented
+
+Verifies the `x-paystack-signature` header (HMAC-SHA512 over the raw body, timing-safe compare)
+before trusting anything, then records `charge.success` / `charge.failed` through `saveOrder()`.
+Unhandled events return 200 so Paystack stops retrying them; storage failures return 500 so it
+retries. Bad signatures get 401.
+
+### Paystack setup
+
+1. Copy your secret key from the Paystack dashboard into `PAYSTACK_SECRET_KEY` (Vercel env vars and
+   `.env.local`). It is server-only—never prefix it with `NEXT_PUBLIC_`.
+2. Add `https://<your-domain>/api/webhooks/paystack` as the webhook URL in the dashboard.
+3. Set `NEXT_PUBLIC_SITE_URL` so the post-payment redirect to `/order/<reference>` is absolute.
+
+Test keys (`sk_test_…`) exercise the whole flow with Paystack's test cards and test MoMo numbers.
+
+Two gaps to close before real money moves:
+
+- **Payments are recorded, not reconciled.** `saveOrder()` logs or forwards; nothing compares the
+  paid amount against the pending order. With Postgres, upsert on `reference` and assert the amount
+  matches before marking an order paid—Paystack can deliver the same webhook more than once, so that
+  write must be idempotent.
+- **No stock, tax, or delivery-fee model.** The charge is the cart subtotal exactly.
+
 ### Still to build
 
-- `POST /api/cart/checkout` — create Paystack session
-- `POST /api/webhooks/paystack` — payment confirmation
 - `POST /api/webhooks/calcom` — booking confirmations
 - `GET /api/products` — CMS-backed or DB-backed catalog
 

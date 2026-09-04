@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/context/cart-provider";
 import { formatGhs, whatsappLink } from "@/lib/utils";
@@ -38,10 +40,52 @@ export function SiteHeader() {
   const { lines, removeLine, subtotal, clear } = useCart();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
+  const [email, setEmail] = React.useState("");
+  const [checkoutPending, setCheckoutPending] = React.useState(false);
+  const [checkoutError, setCheckoutError] = React.useState<string | null>(null);
 
   React.useEffect(() => setMounted(true), []);
 
   const cartCount = lines.reduce((n, l) => n + l.qty, 0);
+
+  async function handleCheckout() {
+    setCheckoutPending(true);
+    setCheckoutError(null);
+
+    try {
+      const response = await fetch("/api/cart/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email,
+          // Configuration only—the server prices the cart from the catalog.
+          lines: lines.map((l) => ({
+            productId: l.productId,
+            sizeLabel: l.sizeLabel,
+            material: l.material,
+            finish: l.finish,
+            installation: l.installation,
+            qty: l.qty,
+          })),
+        }),
+      });
+
+      const data = (await response.json().catch(() => null)) as
+        | { ok?: boolean; authorizationUrl?: string; error?: string }
+        | null;
+
+      if (response.ok && data?.ok && data.authorizationUrl) {
+        window.location.href = data.authorizationUrl;
+        return;
+      }
+
+      setCheckoutError(data?.error ?? "We couldn't start the payment. Please try again.");
+    } catch {
+      setCheckoutError("Network error. Check your connection or WhatsApp us instead.");
+    }
+
+    setCheckoutPending(false);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-kasa-black/5 bg-kasa-cream/75 backdrop-blur-xl dark:border-white/5 dark:bg-kasa-black/70">
@@ -182,8 +226,28 @@ export function SiteHeader() {
                   <span className="font-semibold">{formatGhs(subtotal)}</span>
                 </div>
                 <div className="grid gap-2">
+                  {lines.length > 0 ? (
+                    <div className="mb-2 grid gap-2">
+                      <Label htmlFor="checkout-email" className="text-xs">
+                        Email for your receipt
+                      </Label>
+                      <Input
+                        id="checkout-email"
+                        type="email"
+                        placeholder="you@domain.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      <Button className="w-full" onClick={handleCheckout} disabled={checkoutPending}>
+                        {checkoutPending ? "Starting payment…" : `Pay ${formatGhs(subtotal)} with Paystack`}
+                      </Button>
+                      {checkoutError ? <p className="text-xs text-red-600">{checkoutError}</p> : null}
+                    </div>
+                  ) : null}
+
                   <Button
                     asChild
+                    variant="secondary"
                     className="w-full"
                     onClick={() => setCartOpen(false)}
                   >
