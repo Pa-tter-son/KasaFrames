@@ -169,6 +169,71 @@ export function planeToImage(quad: Quad, point: Point): Point {
 }
 
 /**
+ * Recovers the wall's true width-to-height ratio from its shape in the photo.
+ *
+ * Once someone marks the four corners of a real rectangle, the photograph
+ * already contains its proportions—asking them to also guess the height invites
+ * a mismatch, and a mismatch stretches every piece hung on the plane. This is
+ * the standard single-view rectangle rectification (Zhang & He): assume square
+ * pixels and the principal point at the image centre, solve for the focal
+ * length the quad implies, and read the ratio off the result.
+ *
+ * Returns null when the geometry cannot support an answer—a near fronto-parallel
+ * quad carries no perspective to solve from—so the caller keeps whatever the
+ * customer set by hand.
+ */
+export function aspectFromQuad(quad: Quad, imageW: number, imageH: number): number | null {
+  if (imageW <= 0 || imageH <= 0) return null;
+
+  const cx = imageW / 2;
+  const cy = imageH / 2;
+  const toPixel = (p: Point): [number, number, number] => [p.x * imageW - cx, p.y * imageH - cy, 1];
+
+  // Zhang's naming: m1 top-left, m2 top-right, m3 bottom-left, m4 bottom-right.
+  const m1 = toPixel(quad[0]);
+  const m2 = toPixel(quad[1]);
+  const m3 = toPixel(quad[3]);
+  const m4 = toPixel(quad[2]);
+
+  const cross = (a: number[], b: number[]) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+  const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+  const d2 = dot(cross(m2, m4), m3);
+  const d3 = dot(cross(m3, m4), m2);
+  if (Math.abs(d2) < 1e-9 || Math.abs(d3) < 1e-9) return null;
+
+  const k2 = dot(cross(m1, m4), m3) / d2;
+  const k3 = dot(cross(m1, m4), m2) / d3;
+
+  const n2 = [k2 * m2[0] - m1[0], k2 * m2[1] - m1[1], k2 * m2[2] - m1[2]];
+  const n3 = [k3 * m3[0] - m1[0], k3 * m3[1] - m1[1], k3 * m3[2] - m1[2]];
+
+  const denom = n2[2] * n3[2];
+
+  // Barely any perspective: the quad is its own answer.
+  if (Math.abs(denom) < 1e-9) {
+    const w = Math.hypot(n2[0], n2[1]);
+    const h = Math.hypot(n3[0], n3[1]);
+    return h > 1e-9 ? w / h : null;
+  }
+
+  const fSquared = -(n2[0] * n3[0] + n2[1] * n3[1]) / denom;
+  if (!Number.isFinite(fSquared) || fSquared <= 0) return null;
+
+  const num = n2[0] ** 2 + n2[1] ** 2 + n2[2] ** 2 * fSquared;
+  const den = n3[0] ** 2 + n3[1] ** 2 + n3[2] ** 2 * fSquared;
+  if (den <= 0) return null;
+
+  const ratio = Math.sqrt(num / den);
+  // Anything this extreme is a misplaced corner, not a wall.
+  return Number.isFinite(ratio) && ratio > 0.15 && ratio < 8 ? ratio : null;
+}
+
+/**
  * Guesses the wall plane from the photograph.
  *
  * Sobel for edges, then a Hough vote for straight lines, then the strongest

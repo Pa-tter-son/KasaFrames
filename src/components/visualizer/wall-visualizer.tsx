@@ -13,7 +13,15 @@ import {
 } from "@/components/ui/select";
 import { WallStage } from "@/components/visualizer/wall-stage";
 import { getProduct, type ProductId } from "@/lib/data/catalog";
-import { detectWallQuad, fittedQuad, FLAT_WALL, imageToPlane, type Point, type Quad } from "@/lib/perspective";
+import {
+  aspectFromQuad,
+  detectWallQuad,
+  fittedQuad,
+  FLAT_WALL,
+  imageToPlane,
+  type Point,
+  type Quad,
+} from "@/lib/perspective";
 import { formatGhs } from "@/lib/utils";
 import {
   CM_PER_INCH,
@@ -104,6 +112,16 @@ export function WallVisualizer() {
     if (quadMode !== "fitted" || imgSize.w === 0 || imgSize.h === 0) return;
     setQuad(fittedQuad(imgSize.w, imgSize.h, wallCm, wallHeightCm));
   }, [quadMode, imgSize, wallCm, wallHeightCm]);
+
+  // Once the corners sit on a real rectangle, the photo already knows its
+  // proportions—so the height follows from the width rather than a second guess.
+  React.useEffect(() => {
+    if (quadMode !== "custom" || imgSize.w === 0 || imgSize.h === 0) return;
+    const aspect = aspectFromQuad(quad, imgSize.w, imgSize.h);
+    if (!aspect) return;
+    const derived = Math.round(clamp(wallCm / aspect, 150, 700));
+    setWallHeightCm((prev) => (Math.abs(prev - derived) > 1 ? derived : prev));
+  }, [quadMode, quad, imgSize, wallCm]);
 
   /** Reads the wall out of the photograph; falls back to a flat rectangle. */
   const detect = React.useCallback((announce: boolean) => {
@@ -546,11 +564,13 @@ export function WallVisualizer() {
               onChange={(e) => setWallCm(Number(e.target.value))}
               className="accent-kasa-gold"
             />
-            <Label>Wall height ({wallHeightCm} cm)</Label>
+            <Label>
+              Wall height ({wallHeightCm} cm){quadMode === "custom" ? " — from your corners" : ""}
+            </Label>
             <input
               type="range"
-              min={200}
-              max={450}
+              min={150}
+              max={700}
               step={10}
               value={wallHeightCm}
               onChange={(e) => setWallHeightCm(Number(e.target.value))}
