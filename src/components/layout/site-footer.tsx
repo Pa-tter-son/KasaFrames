@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { whatsappLink } from "@/lib/utils";
+import { BRAND_PHONE_DISPLAY, BRAND_PHONE_TEL, whatsappLink } from "@/lib/utils";
 
 const footerNav = [
   { href: "/collections", label: "Collections" },
@@ -59,8 +59,8 @@ export function SiteFooter() {
               </p>
               <p className="mt-4 text-sm text-kasa-sand/80">
                 Phone:{" "}
-                <a className="text-kasa-cream underline-offset-4 hover:underline" href="tel:+233000000000">
-                  {process.env.NEXT_PUBLIC_BRAND_PHONE ?? "+233 00 000 0000"}
+                <a className="text-kasa-cream underline-offset-4 hover:underline" href={BRAND_PHONE_TEL}>
+                  {BRAND_PHONE_DISPLAY}
                 </a>
               </p>
             </div>

@@ -13,7 +13,15 @@ export function formatGhs(value: number) {
   }).format(value);
 }
 
+/** Studio line, digits only. Env override lets staging point somewhere else. */
+export const BRAND_PHONE_E164 = process.env.NEXT_PUBLIC_WHATSAPP_E164 ?? "233591490322";
+
+/** Same line, formatted for display. */
+export const BRAND_PHONE_DISPLAY = process.env.NEXT_PUBLIC_BRAND_PHONE ?? "+233 59 149 0322";
+
+/** Same line, as a tel: href. */
+export const BRAND_PHONE_TEL = `tel:+${BRAND_PHONE_E164}`;
+
 export function whatsappLink(message: string) {
-  const phone = process.env.NEXT_PUBLIC_WHATSAPP_E164 ?? "233000000000";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${BRAND_PHONE_E164}?text=${encodeURIComponent(message)}`;
 }

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitLead } from "@/lib/lead-client";
 import type { FieldErrors } from "@/lib/leads";
-import { whatsappLink } from "@/lib/utils";
+import { BRAND_PHONE_DISPLAY, BRAND_PHONE_TEL, whatsappLink } from "@/lib/utils";
 import { Instagram, MessageCircle, Phone } from "lucide-react";
 
 const mapUrl = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL;
@@ -133,9 +133,9 @@ export function ContactPanel() {
               </a>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
-              <a href="tel:+233000000000">
+              <a href={BRAND_PHONE_TEL}>
                 <Phone className="h-4 w-4" />
-                {process.env.NEXT_PUBLIC_BRAND_PHONE ?? "+233 00 000 0000"}
+                {BRAND_PHONE_DISPLAY}
               </a>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
