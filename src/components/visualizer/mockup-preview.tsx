@@ -7,6 +7,7 @@ import { WallStage } from "@/components/visualizer/wall-stage";
 import { useCart } from "@/context/cart-provider";
 import { getProduct } from "@/lib/data/catalog";
 import { formatGhs, whatsappLink } from "@/lib/utils";
+import { FLAT_WALL } from "@/lib/perspective";
 import { costOf, loadComposition, pieceCm, type Composition } from "@/lib/visualizer";
 import { ArrowLeft, MessageCircle, ShoppingBag } from "lucide-react";
 
@@ -73,7 +74,13 @@ export function MockupPreview() {
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="lg:col-span-8">
-        <WallStage roomSrc={composition.roomSrc} wallCm={composition.wallCm} pieces={composition.pieces} />
+        <WallStage
+          roomSrc={composition.roomSrc}
+          wallCm={composition.wallCm}
+          wallHeightCm={composition.wallHeightCm ?? 280}
+          quad={composition.quad ?? FLAT_WALL}
+          pieces={composition.pieces}
+        />
 
         <p className="mt-4 text-xs text-kasa-muted dark:text-kasa-sand/70">
           Drawn against a {composition.wallCm} cm wall. This preview stays on the site—send it to the studio and we

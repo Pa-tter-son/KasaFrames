@@ -1,48 +1,71 @@
 "use client";
 
 import * as React from "react";
+import { matrix3dFor, planeToImage, type Quad } from "@/lib/perspective";
 import { pieceCm, styleMeta, type Piece } from "@/lib/visualizer";
 
+/** Reference width of the wall plane in its own pixel space. */
+export const PLANE_W = 1200;
+
 /**
- * Draws the room and the pieces on it. Shared by the editor and the preview so
- * what the customer approves is the same rendering they were dragging around.
+ * Draws the room, then lays the pieces onto the wall *plane* rather than onto
+ * the flat photograph. Everything inside the plane is positioned in wall
+ * coordinates; one CSS matrix3d carries the whole set into the picture's
+ * perspective, so a piece narrows as the wall turns away and its edges follow
+ * the ceiling line instead of cutting across it.
+ *
+ * Shared by the editor and the preview, so what the customer approves is exactly
+ * what they were arranging.
  */
 export function WallStage({
   roomSrc,
   wallCm,
+  wallHeightCm,
+  quad,
   pieces,
   selectedId,
   onPointerDownPiece,
   imgRef,
   stageRef,
   interactive = false,
+  showCorners = false,
+  onCornerPointerDown,
   ...rest
 }: {
   roomSrc: string;
   wallCm: number;
+  wallHeightCm: number;
+  quad: Quad;
   pieces: Piece[];
   selectedId?: string | null;
   onPointerDownPiece?: (id: string) => (event: React.PointerEvent) => void;
   imgRef?: React.RefObject<HTMLImageElement | null>;
   stageRef?: React.RefObject<HTMLDivElement | null>;
   interactive?: boolean;
+  showCorners?: boolean;
+  onCornerPointerDown?: (index: number) => (event: React.PointerEvent) => void;
 } & React.HTMLAttributes<HTMLDivElement>) {
   const localImg = React.useRef<HTMLImageElement>(null);
   const localStage = React.useRef<HTMLDivElement>(null);
   const image = imgRef ?? localImg;
   const stage = stageRef ?? localStage;
-  const [width, setWidth] = React.useState(0);
+
+  const [size, setSize] = React.useState({ w: 0, h: 0 });
 
   React.useEffect(() => {
     const el = stage.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => setWidth(el.clientWidth));
+    const measure = () => setSize({ w: el.clientWidth, h: image.current?.clientHeight ?? 0 });
+    const observer = new ResizeObserver(measure);
     observer.observe(el);
-    setWidth(el.clientWidth);
+    if (image.current) observer.observe(image.current);
+    measure();
     return () => observer.disconnect();
-  }, [stage]);
+  }, [stage, image]);
 
-  const pxPerCm = width > 0 ? width / wallCm : 0;
+  const planeH = PLANE_W * (wallHeightCm / wallCm);
+  const pxPerCm = PLANE_W / wallCm;
+  const ready = size.w > 0 && size.h > 0;
 
   return (
     <div
@@ -57,18 +80,59 @@ export function WallStage({
         alt="The wall"
         className="block h-auto w-full select-none"
         draggable={false}
+        onLoad={() => setSize({ w: stage.current?.clientWidth ?? 0, h: image.current?.clientHeight ?? 0 })}
       />
 
-      {pieces.map((piece) => (
-        <FrameView
-          key={piece.id}
-          piece={piece}
-          pxPerCm={pxPerCm}
-          selected={interactive && piece.id === selectedId}
-          onPointerDown={onPointerDownPiece?.(piece.id)}
-          interactive={interactive}
-        />
-      ))}
+      {ready ? (
+        <div
+          className="absolute left-0 top-0"
+          style={{
+            width: PLANE_W,
+            height: planeH,
+            transformOrigin: "0 0",
+            transform: matrix3dFor(quad, PLANE_W, planeH, size.w, size.h),
+          }}
+        >
+          {pieces.map((piece) => (
+            <FrameView
+              key={piece.id}
+              piece={piece}
+              pxPerCm={pxPerCm}
+              selected={interactive && piece.id === selectedId}
+              onPointerDown={onPointerDownPiece?.(piece.id)}
+              interactive={interactive}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {showCorners && ready
+        ? quad.map((corner, index) => {
+            const at = planeToImage(quad, index === 0 ? { x: 0, y: 0 } : index === 1 ? { x: 1, y: 0 } : index === 2 ? { x: 1, y: 1 } : { x: 0, y: 1 });
+            return (
+              <button
+                key={index}
+                type="button"
+                aria-label={`Wall corner ${index + 1}`}
+                onPointerDown={onCornerPointerDown?.(index)}
+                className="absolute z-10 h-7 w-7 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none rounded-full border-2 border-white bg-kasa-gold shadow-lg active:cursor-grabbing"
+                style={{ left: `${at.x * 100}%`, top: `${at.y * 100}%` }}
+              />
+            );
+          })
+        : null}
+
+      {showCorners && ready ? (
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polygon
+            points={quad.map((p) => `${p.x * 100},${p.y * 100}`).join(" ")}
+            fill="rgba(201,169,98,0.10)"
+            stroke="rgba(201,169,98,0.9)"
+            strokeWidth="0.35"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      ) : null}
     </div>
   );
 }
@@ -116,12 +180,12 @@ export function FrameView({
         background: frameBg,
         padding: border,
         boxShadow: selected
-          ? "0 0 0 2px rgba(201,169,98,0.95), 0 18px 34px rgba(0,0,0,0.32)"
+          ? "0 0 0 6px rgba(201,169,98,0.95), 0 40px 70px rgba(0,0,0,0.32)"
           : piece.style === "float"
-            ? "0 20px 34px rgba(0,0,0,0.34)"
+            ? "0 36px 60px rgba(0,0,0,0.34)"
             : piece.style === "canvas"
-              ? "0 12px 24px rgba(0,0,0,0.26)"
-              : "0 16px 30px rgba(0,0,0,0.30)",
+              ? "0 26px 44px rgba(0,0,0,0.26)"
+              : "0 30px 52px rgba(0,0,0,0.30)",
         borderRadius: 2,
       }}
     >
@@ -145,7 +209,6 @@ export function FrameView({
             />
           )}
 
-          {/* Gloss finishes catch the light across the face. */}
           {piece.style === "gloss-plain" || piece.style === "gloss-ring" ? (
             <div
               className="pointer-events-none absolute inset-0"
@@ -158,7 +221,6 @@ export function FrameView({
         </div>
       </div>
 
-      {/* The ring detail sits just inside the edge of a glossy print. */}
       {piece.style === "gloss-ring" ? (
         <div
           className="pointer-events-none absolute"
@@ -169,7 +231,6 @@ export function FrameView({
         />
       ) : null}
 
-      {/* Canvas returns the image around the side, catching a little shade. */}
       {piece.style === "canvas" ? (
         <div
           className="pointer-events-none absolute inset-y-0 right-0"

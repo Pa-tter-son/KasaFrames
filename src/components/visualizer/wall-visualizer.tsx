@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { WallStage } from "@/components/visualizer/wall-stage";
 import { getProduct, type ProductId } from "@/lib/data/catalog";
+import { detectWallQuad, FLAT_WALL, imageToPlane, type Point, type Quad } from "@/lib/perspective";
 import { formatGhs } from "@/lib/utils";
 import {
   CM_PER_INCH,
@@ -25,7 +26,18 @@ import {
   type FrameStyle,
   type Piece,
 } from "@/lib/visualizer";
-import { Copy, Eye, ImagePlus, LayoutGrid, RotateCcw, RotateCw, Ruler, Trash2, Upload } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  ImagePlus,
+  LayoutGrid,
+  RotateCcw,
+  RotateCw,
+  Ruler,
+  Scan,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 const SAMPLE_ROOMS = [
   { id: "loft-sofa", label: "Loft lounge", src: "/media/rooms/loft-sofa.jpg", wallCm: 420 },
@@ -41,6 +53,10 @@ export function WallVisualizer() {
 
   const [roomSrc, setRoomSrc] = React.useState(SAMPLE_ROOMS[0].src);
   const [wallCm, setWallCm] = React.useState(SAMPLE_ROOMS[0].wallCm);
+  const [wallHeightCm, setWallHeightCm] = React.useState(280);
+  const [quad, setQuad] = React.useState<Quad>(FLAT_WALL);
+  const [adjustingWall, setAdjustingWall] = React.useState(false);
+  const [wallNote, setWallNote] = React.useState<string | null>(null);
   const [pieces, setPieces] = React.useState<Piece[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [style, setStyle] = React.useState<FrameStyle>("black-mat");
@@ -50,9 +66,10 @@ export function WallVisualizer() {
 
   const stageRef = React.useRef<HTMLDivElement>(null);
   const imgRef = React.useRef<HTMLImageElement>(null);
-  const dragRef = React.useRef<{ id: string; grabDxPct: number; grabDyPct: number } | null>(null);
+  const dragRef = React.useRef<{ id: string; dxPct: number; dyPct: number } | null>(null);
+  const cornerRef = React.useRef<number | null>(null);
+  const pendingDetect = React.useRef(false);
 
-  // The finish decides which price table applies.
   const product = getProduct(STYLE_PRODUCT[style]);
   const selected = pieces.find((p) => p.id === selectedId) ?? null;
   const cost = costOf(pieces, installation);
@@ -63,6 +80,36 @@ export function WallVisualizer() {
       setSizeLabel(product.sizes[Math.min(2, product.sizes.length - 1)].label);
     }
   }, [product, sizeLabel]);
+
+  /** Reads the wall out of the photograph; falls back to a flat rectangle. */
+  const detect = React.useCallback((announce: boolean) => {
+    const img = imgRef.current;
+    if (!img || !img.complete || img.naturalWidth === 0) {
+      pendingDetect.current = true;
+      return;
+    }
+
+    const found = detectWallQuad(img);
+    if (found) {
+      setQuad(found);
+      setWallNote("We read the wall from your photo. Drag the gold corners if it is not quite right.");
+    } else {
+      setQuad(FLAT_WALL);
+      if (announce) {
+        setWallNote("We could not read the angle of this wall. Drag the gold corners onto it and the frames will follow.");
+      }
+    }
+  }, []);
+
+  function loadRoom(src: string, cm?: number) {
+    setRoomSrc(src);
+    if (cm) setWallCm(cm);
+    setPieces([]);
+    setSelectedId(null);
+    setQuad(FLAT_WALL);
+    setWallNote(null);
+    pendingDetect.current = true;
+  }
 
   function currentSize() {
     return product?.sizes.find((s) => s.label === sizeLabel) ?? product?.sizes[0];
@@ -86,8 +133,8 @@ export function WallVisualizer() {
     const piece: Piece = {
       ...base,
       id: uid(),
-      xPct: 42 + (pieces.length % 4) * 5,
-      yPct: 34 + (pieces.length % 3) * 4,
+      xPct: 42 + (pieces.length % 4) * 6,
+      yPct: 40 + (pieces.length % 3) * 5,
     };
     setPieces((prev) => [...prev, piece]);
     setSelectedId(piece.id);
@@ -95,32 +142,25 @@ export function WallVisualizer() {
 
   function applyPreset(preset: "single" | "triptych" | "grid" | "stair") {
     const base = basePiece();
-    const stageWidth = stageRef.current?.clientWidth ?? 0;
-    const stageHeight = imgRef.current?.clientHeight ?? 0;
-    if (!base || stageWidth === 0 || stageHeight === 0) return;
-
-    const pxPerCm = stageWidth / wallCm;
     const size = currentSize();
-    if (!size) return;
+    if (!base || !size) return;
 
-    const wCm = size.widthIn * CM_PER_INCH;
-    const hCm = size.heightIn * CM_PER_INCH;
-    const gapCm = 6;
-
-    const wPct = ((wCm * pxPerCm) / stageWidth) * 100;
-    const gapXPct = ((gapCm * pxPerCm) / stageWidth) * 100;
-    const hPct = ((hCm * pxPerCm) / stageHeight) * 100;
-    const gapYPct = ((gapCm * pxPerCm) / stageHeight) * 100;
+    // Percentages are of the wall itself now, so the arithmetic is just
+    // centimetres over wall size—no screen pixels involved.
+    const wPct = ((size.widthIn * CM_PER_INCH) / wallCm) * 100;
+    const hPct = ((size.heightIn * CM_PER_INCH) / wallHeightCm) * 100;
+    const gapXPct = (6 / wallCm) * 100;
+    const gapYPct = (6 / wallHeightCm) * 100;
 
     const next: Piece[] = [];
 
     if (preset === "single") {
-      next.push({ ...base, id: uid(), xPct: 50, yPct: 38 });
+      next.push({ ...base, id: uid(), xPct: 50, yPct: 45 });
     }
 
     if (preset === "triptych") {
       const stepX = wPct + gapXPct;
-      [-1, 0, 1].forEach((i) => next.push({ ...base, id: uid(), xPct: 50 + i * stepX, yPct: 38 }));
+      [-1, 0, 1].forEach((i) => next.push({ ...base, id: uid(), xPct: 50 + i * stepX, yPct: 45 }));
     }
 
     if (preset === "grid") {
@@ -128,23 +168,21 @@ export function WallVisualizer() {
       const stepY = hPct + gapYPct;
       [-1, 0].forEach((row) =>
         [-1, 0, 1].forEach((col) =>
-          next.push({ ...base, id: uid(), xPct: 50 + col * stepX, yPct: 38 + (row + 0.5) * stepY }),
+          next.push({ ...base, id: uid(), xPct: 50 + col * stepX, yPct: 45 + (row + 0.5) * stepY }),
         ),
       );
     }
 
     if (preset === "stair") {
-      // Each piece clears a full width plus the gap, and steps up by roughly a
-      // stair rise, so the line climbs the way the treads do.
       const stepX = wPct + gapXPct;
       const stepY = hPct * 0.45;
       const startX = 50 - stepX * 2;
       [0, 1, 2, 3, 4].forEach((i) =>
-        next.push({ ...base, id: uid(), xPct: startX + i * stepX, yPct: 66 - i * stepY }),
+        next.push({ ...base, id: uid(), xPct: startX + i * stepX, yPct: 70 - i * stepY }),
       );
     }
 
-    setPieces(next.map((p) => ({ ...p, xPct: clamp(p.xPct, 4, 96), yPct: clamp(p.yPct, 4, 96) })));
+    setPieces(next.map((p) => ({ ...p, xPct: clamp(p.xPct, 3, 97), yPct: clamp(p.yPct, 3, 97) })));
     setSelectedId(null);
   }
 
@@ -161,10 +199,8 @@ export function WallVisualizer() {
     if (!file) return;
     setNotice(null);
     try {
-      // Downscaled up front: phone photos are far larger than this needs.
-      setRoomSrc(await downscaleImage(file));
-      setPieces([]);
-      setSelectedId(null);
+      const src = await downscaleImage(file);
+      loadRoom(src);
     } catch {
       setNotice("We couldn't read that image. Try a JPG or PNG from your camera roll.");
     }
@@ -179,50 +215,84 @@ export function WallVisualizer() {
     }
   }
 
-  const onPointerDownPiece = (id: string) => (event: React.PointerEvent) => {
-    const stage = stageRef.current;
-    const piece = pieces.find((p) => p.id === id);
-    if (!stage || !piece) return;
+  /** Pointer position as a fraction of the room photo. */
+  function pointerOnImage(event: React.PointerEvent): Point | null {
+    const img = imgRef.current;
+    if (!img) return null;
+    const rect = img.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+    return { x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height };
+  }
 
-    const rect = stage.getBoundingClientRect();
+  /** …and the same point in wall coordinates, as percentages. */
+  function pointerOnWall(event: React.PointerEvent) {
+    const onImage = pointerOnImage(event);
+    if (!onImage) return null;
+    const onPlane = imageToPlane(quad, onImage);
+    return onPlane ? { x: onPlane.x * 100, y: onPlane.y * 100 } : null;
+  }
+
+  const onPointerDownPiece = (id: string) => (event: React.PointerEvent) => {
+    const piece = pieces.find((p) => p.id === id);
+    const at = pointerOnWall(event);
+    if (!piece || !at) return;
+
     setSelectedId(id);
-    dragRef.current = {
-      id,
-      grabDxPct: ((event.clientX - rect.left) / rect.width) * 100 - piece.xPct,
-      grabDyPct: ((event.clientY - rect.top) / rect.height) * 100 - piece.yPct,
-    };
+    dragRef.current = { id, dxPct: at.x - piece.xPct, dyPct: at.y - piece.yPct };
     (event.target as Element).setPointerCapture?.(event.pointerId);
     event.preventDefault();
   };
 
+  const onCornerPointerDown = (index: number) => (event: React.PointerEvent) => {
+    cornerRef.current = index;
+    (event.target as Element).setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const onPointerMove = (event: React.PointerEvent) => {
+    if (cornerRef.current !== null) {
+      const at = pointerOnImage(event);
+      if (!at) return;
+      const index = cornerRef.current;
+      setQuad((prev) => {
+        const next = [...prev] as Quad;
+        next[index] = { x: clamp(at.x, 0, 1), y: clamp(at.y, 0, 1) };
+        return next;
+      });
+      return;
+    }
+
     const drag = dragRef.current;
-    const stage = stageRef.current;
-    if (!drag || !stage) return;
+    if (!drag) return;
 
-    const rect = stage.getBoundingClientRect();
-    let xPct = ((event.clientX - rect.left) / rect.width) * 100 - drag.grabDxPct;
-    let yPct = ((event.clientY - rect.top) / rect.height) * 100 - drag.grabDyPct;
+    const at = pointerOnWall(event);
+    if (!at) return;
 
-    // Snap to the line the other pieces share, the way a hang is set out.
+    let xPct = at.x - drag.dxPct;
+    let yPct = at.y - drag.dyPct;
+
+    // Snap to the line the other pieces share. In wall coordinates this is a
+    // real hanging line, not just something that looks aligned on screen.
     const others = pieces.filter((p) => p.id !== drag.id);
     if (others.length > 0) {
       const line = others.reduce((sum, p) => sum + p.yPct, 0) / others.length;
-      if (Math.abs(yPct - line) < 1.2) yPct = line;
+      if (Math.abs(yPct - line) < 1.5) yPct = line;
       const nearestX = others.reduce(
         (best, p) => (Math.abs(p.xPct - xPct) < Math.abs(best - xPct) ? p.xPct : best),
         Infinity,
       );
-      if (Math.abs(nearestX - xPct) < 0.8) xPct = nearestX;
+      if (Math.abs(nearestX - xPct) < 1) xPct = nearestX;
     }
 
     setPieces((prev) =>
-      prev.map((p) => (p.id === drag.id ? { ...p, xPct: clamp(xPct, 2, 98), yPct: clamp(yPct, 2, 98) } : p)),
+      prev.map((p) => (p.id === drag.id ? { ...p, xPct: clamp(xPct, -5, 105), yPct: clamp(yPct, -5, 105) } : p)),
     );
   };
 
   const endDrag = () => {
     dragRef.current = null;
+    cornerRef.current = null;
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -251,12 +321,20 @@ export function WallVisualizer() {
 
     const move = moves[event.key];
     if (!move) return;
-    updateSelected({ xPct: clamp(selected.xPct + move[0], 2, 98), yPct: clamp(selected.yPct + move[1], 2, 98) });
+    updateSelected({ xPct: clamp(selected.xPct + move[0], -5, 105), yPct: clamp(selected.yPct + move[1], -5, 105) });
     event.preventDefault();
   };
 
   function openPreview() {
-    const ok = saveComposition({ roomSrc, wallCm, installation, pieces, savedAt: new Date().toISOString() });
+    const ok = saveComposition({
+      roomSrc,
+      wallCm,
+      wallHeightCm,
+      quad,
+      installation,
+      pieces,
+      savedAt: new Date().toISOString(),
+    });
     if (!ok) {
       setNotice("That room photo is too large to carry to the preview. Try a smaller image.");
       return;
@@ -270,9 +348,13 @@ export function WallVisualizer() {
         <WallStage
           roomSrc={roomSrc}
           wallCm={wallCm}
+          wallHeightCm={wallHeightCm}
+          quad={quad}
           pieces={pieces}
           selectedId={selectedId}
           onPointerDownPiece={onPointerDownPiece}
+          onCornerPointerDown={onCornerPointerDown}
+          showCorners={adjustingWall}
           stageRef={stageRef}
           imgRef={imgRef}
           interactive
@@ -287,6 +369,15 @@ export function WallVisualizer() {
           className="relative w-full touch-none overflow-hidden rounded-[2rem] border border-kasa-black/10 bg-kasa-sand/20 outline-none focus-visible:ring-2 focus-visible:ring-kasa-gold dark:border-white/10"
         />
 
+        {/* The photo may already be decoded before the handler is attached. */}
+        <ImageReadyProbe imgRef={imgRef} onReady={() => detect(true)} pending={pendingDetect} />
+
+        {wallNote ? (
+          <p className="mt-4 rounded-2xl border border-kasa-gold/30 bg-kasa-gold/10 px-4 py-3 text-xs leading-relaxed">
+            {wallNote}
+          </p>
+        ) : null}
+
         {pieces.length === 0 ? (
           <p className="mt-4 rounded-2xl bg-kasa-black/90 p-4 text-center text-xs text-kasa-cream">
             Choose a finish and size, then press <span className="font-semibold">Add to wall</span>—or start from a
@@ -298,7 +389,7 @@ export function WallVisualizer() {
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-kasa-muted dark:text-kasa-sand/70">
           <span className="inline-flex items-center gap-1.5">
             <Ruler className="h-3.5 w-3.5" />
-            Drawn against a {wallCm} cm wall, so the sizes are true
+            {wallCm} × {wallHeightCm} cm wall, drawn in your photo&rsquo;s perspective
           </span>
           {selected ? (
             <span>
@@ -349,12 +440,7 @@ export function WallVisualizer() {
               <button
                 key={sample.id}
                 type="button"
-                onClick={() => {
-                  setRoomSrc(sample.src);
-                  setWallCm(sample.wallCm);
-                  setPieces([]);
-                  setSelectedId(null);
-                }}
+                onClick={() => loadRoom(sample.src, sample.wallCm)}
                 className={`overflow-hidden rounded-xl border transition ${
                   roomSrc === sample.src
                     ? "border-kasa-gold ring-2 ring-kasa-gold/30"
@@ -374,7 +460,7 @@ export function WallVisualizer() {
           </label>
 
           <div className="mt-5 grid gap-2">
-            <Label>How wide is that wall? ({wallCm} cm)</Label>
+            <Label>Wall width ({wallCm} cm)</Label>
             <input
               type="range"
               min={150}
@@ -384,8 +470,49 @@ export function WallVisualizer() {
               onChange={(e) => setWallCm(Number(e.target.value))}
               className="accent-kasa-gold"
             />
+            <Label>Wall height ({wallHeightCm} cm)</Label>
+            <input
+              type="range"
+              min={200}
+              max={450}
+              step={10}
+              value={wallHeightCm}
+              onChange={(e) => setWallHeightCm(Number(e.target.value))}
+              className="accent-kasa-gold"
+            />
             <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
               Measure the wall once—everything is drawn against it at true size.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-2">
+            <Label>The wall in your photo</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={adjustingWall ? "primary" : "outline"}
+                size="sm"
+                onClick={() => setAdjustingWall((v) => !v)}
+              >
+                {adjustingWall ? "Done" : "Adjust corners"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => detect(true)}>
+                <Scan className="h-3.5 w-3.5" />
+                Read again
+              </Button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setQuad(FLAT_WALL);
+                setWallNote(null);
+              }}
+              className="text-left text-[11px] text-kasa-muted underline-offset-4 hover:underline dark:text-kasa-sand/70"
+            >
+              Reset to a flat wall
+            </button>
+            <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+              We read the ceiling and skirting lines to work out how your wall recedes, then hang everything on that
+              plane. Drag the gold corners onto the wall if the guess is off.
             </p>
           </div>
 
@@ -462,9 +589,6 @@ export function WallVisualizer() {
                     </Button>
                   ))}
                 </div>
-                <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
-                  For a sloped ceiling or a wall that follows the stairs.
-                </p>
               </div>
             ) : null}
           </div>
@@ -475,10 +599,7 @@ export function WallVisualizer() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-kasa-gold">Selected piece</p>
 
             <div className="mt-4 grid gap-3">
-              <Select
-                value={selected.sizeLabel}
-                onValueChange={(v) => updateSelected({ sizeLabel: v })}
-              >
+              <Select value={selected.sizeLabel} onValueChange={(v) => updateSelected({ sizeLabel: v })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -528,7 +649,7 @@ export function WallVisualizer() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const copy = { ...selected, id: uid(), xPct: clamp(selected.xPct + 6, 2, 98) };
+                    const copy = { ...selected, id: uid(), xPct: clamp(selected.xPct + 8, 3, 97) };
                     setPieces((prev) => [...prev, copy]);
                     setSelectedId(copy.id);
                   }}
@@ -623,6 +744,41 @@ export function WallVisualizer() {
       </div>
     </div>
   );
+}
+
+/**
+ * Runs the wall detection once the photo is actually decoded. A cached image can
+ * be complete before React attaches anything, so polling briefly is more
+ * reliable here than an onLoad handler alone.
+ */
+function ImageReadyProbe({
+  imgRef,
+  onReady,
+  pending,
+}: {
+  imgRef: React.RefObject<HTMLImageElement | null>;
+  onReady: () => void;
+  pending: React.RefObject<boolean>;
+}) {
+  React.useEffect(() => {
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
+      const img = imgRef.current;
+      if (pending.current && img?.complete && img.naturalWidth > 0) {
+        pending.current = false;
+        onReady();
+        return;
+      }
+      window.setTimeout(tick, 120);
+    };
+    tick();
+    return () => {
+      cancelled = true;
+    };
+  }, [imgRef, onReady, pending]);
+
+  return null;
 }
 
 function clamp(n: number, min: number, max: number) {

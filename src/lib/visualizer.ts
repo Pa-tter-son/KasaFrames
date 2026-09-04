@@ -1,4 +1,5 @@
 import { getProduct, getSize, type ProductId } from "@/lib/data/catalog";
+import type { Quad } from "@/lib/perspective";
 
 export type FrameStyle = "black-mat" | "gloss-ring" | "gloss-plain" | "canvas" | "float";
 
@@ -52,6 +53,9 @@ export interface Piece {
 export interface Composition {
   roomSrc: string;
   wallCm: number;
+  wallHeightCm: number;
+  /** The wall plane in the photograph, so the preview keeps the perspective. */
+  quad: Quad;
   installation: boolean;
   pieces: Piece[];
   savedAt: string;
