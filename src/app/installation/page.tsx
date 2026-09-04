@@ -55,7 +55,7 @@ export default function InstallationPage() {
       <section className="mt-16">
         <Reveal className="relative aspect-[21/9] overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
           <Image
-            src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2200&q=80"
+            src="/gallery/corridor-salon-wall.jpg"
             alt="Time-lapse still"
             fill
             className="object-cover"

@@ -15,7 +15,8 @@ export default function GalleryPage() {
           Walls that read like editorial spreads.
         </h1>
         <p className="mt-5 text-sm leading-relaxed text-kasa-muted dark:text-kasa-sand/80">
-          Filter by space type or search by mood. Each project is composed for real life—not showroom fantasy.
+          Filter by finish—acrylic gloss, matte framed, canvas wrap, photo block—or by the kind of wall you are
+          planning. Tap any piece for the sizes and spacing behind it.
         </p>
       </header>
 

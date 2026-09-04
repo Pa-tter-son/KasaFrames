@@ -63,7 +63,7 @@ export const portfolioItems = [
     title: "Cream Living — Ring Pair",
     category: "Living rooms",
     image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/editorial-gallery-wall.jpg",
     span: "lg:col-span-2 lg:row-span-2",
   },
   {
@@ -71,7 +71,7 @@ export const portfolioItems = [
     title: "Stair Noir Cascade",
     category: "Staircases",
     image:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/corridor-salon-wall.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -79,7 +79,7 @@ export const portfolioItems = [
     title: "Office Horizon Float",
     category: "Offices",
     image:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/heritage-family-wall.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -87,7 +87,7 @@ export const portfolioItems = [
     title: "Bedroom Atelier Canvas",
     category: "Bedrooms",
     image:
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/framed-trio-mono.jpg",
     span: "lg:col-span-2",
   },
   {
@@ -95,7 +95,7 @@ export const portfolioItems = [
     title: "Restaurant Warm Aurum",
     category: "Restaurants",
     image:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/canvas-wrap-quartet.jpg",
     span: "lg:col-span-1",
   },
   {
@@ -103,7 +103,7 @@ export const portfolioItems = [
     title: "Salon Editorial Grid",
     category: "Beauty salons",
     image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/photo-block-cluster.jpg",
     span: "lg:col-span-1 lg:row-span-2",
   },
   {
@@ -111,7 +111,7 @@ export const portfolioItems = [
     title: "Airbnb Osu — Quiet Statement",
     category: "Airbnb setups",
     image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "/gallery/black-frame-grid-six.jpg",
     span: "lg:col-span-2",
   },
 ];
@@ -119,16 +119,16 @@ export const portfolioItems = [
 export const beforeAfter = [
   {
     before:
-      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1400&q=80",
+      "/gallery/statement-canvas-bedroom.jpg",
     after:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1400&q=80",
+      "/gallery/mounted-photo-panels.jpg",
     caption: "Living wall · Ring pair composition",
   },
   {
     before:
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1400&q=80",
+      "/gallery/dining-salon-arrangement.jpg",
     after:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=80",
+      "/gallery/matte-frames-mat-border.jpg",
     caption: "Stairwell · Thick edge cascade",
   },
 ];

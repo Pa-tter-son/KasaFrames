@@ -53,8 +53,7 @@ export const collections: Collection[] = [
     subtitle: "Warm everyday luxury with a sculptural ring detail.",
     positioning: "Designed for modern Ghanaian homes seeking affordable luxury.",
     mood: "Welcoming, luminous, quietly bold.",
-    heroImage:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=80",
+    heroImage: "/gallery/black-frame-grid-six.jpg",
     accent: "ring",
     stylingTips: [
       "Pair with warm neutrals and soft indirect lighting.",
@@ -70,8 +69,7 @@ export const collections: Collection[] = [
     subtitle: "Museum-grade presence for artworks and limited prints.",
     positioning: "Texture-forward presentation with a clean gallery edge.",
     mood: "Artistic, contemplative, refined.",
-    heroImage:
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=2000&q=80",
+    heroImage: "/gallery/canvas-wrap-quartet.jpg",
     accent: "canvas",
     stylingTips: [
       "Float above low consoles to create vertical breathing room.",
@@ -87,8 +85,7 @@ export const collections: Collection[] = [
     subtitle: "Architectural weight for staircases and family galleries.",
     positioning: "Bold edges that anchor classic and contemporary spaces alike.",
     mood: "Confident, structured, timeless.",
-    heroImage:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2000&q=80",
+    heroImage: "/gallery/framed-trio-mono.jpg",
     accent: "thick",
     stylingTips: [
       "Stagger heights along stair flights for cinematic ascent.",
@@ -104,8 +101,7 @@ export const collections: Collection[] = [
     subtitle: "Ultra-thin edge engineering for statement pieces.",
     positioning: "Our elite line for galleries, penthouses, and signature walls.",
     mood: "Weightless, precise, gallery-private.",
-    heroImage:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=80",
+    heroImage: "/gallery/mounted-photo-panels.jpg",
     accent: "float",
     stylingTips: [
       "Let negative wall space become part of the composition.",
@@ -128,11 +124,10 @@ export const products: Product[] = [
     longDescription:
       "Hand-finished wood body with a deep onyx ring accent. Calibrated for living rooms, bedrooms, and boutique hospitality. Each piece is inspected for edge uniformity and ring alignment before dispatch.",
     basePriceGhs: 890,
-    heroImage:
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=1600&q=80",
+    heroImage: "/gallery/matte-frames-mat-border.jpg",
     gallery: [
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1600&q=80",
+      "/gallery/heritage-family-wall.jpg",
+      "/gallery/photo-block-cluster.jpg",
     ],
     materials: ["wood", "composite"],
     finishes: ["matte-black", "gloss-charcoal"],
@@ -155,11 +150,10 @@ export const products: Product[] = [
     longDescription:
       "Micro-textured ring with controlled reflectance—never loud, always intentional. Ideal with sand, cream, and charcoal palettes.",
     basePriceGhs: 960,
-    heroImage:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80",
+    heroImage: "/gallery/dining-salon-arrangement.jpg",
     gallery: [
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+      "/gallery/framed-trio-mono.jpg",
+      "/gallery/black-frame-grid-six.jpg",
     ],
     materials: ["wood"],
     finishes: ["warm-oak", "gold-accent"],
@@ -182,11 +176,10 @@ export const products: Product[] = [
     longDescription:
       "Structural backing with humidity-aware spacing for Ghana’s climate cycles. Finished with a whisper-thin face that keeps the art hero.",
     basePriceGhs: 1280,
-    heroImage:
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=1600&q=80",
+    heroImage: "/gallery/canvas-wrap-edge-detail.jpg",
     gallery: [
-      "https://images.unsplash.com/photo-1618219971214-38a49e0c1d5d?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=1600&q=80",
+      "/gallery/dining-salon-arrangement.jpg",
+      "/gallery/editorial-gallery-wall.jpg",
     ],
     materials: ["composite", "wood"],
     finishes: ["matte-black", "gloss-charcoal"],
@@ -209,11 +202,10 @@ export const products: Product[] = [
     longDescription:
       "Reinforced corners and concealed fixing for high-traffic walls. Designed for cascading layouts with consistent sightlines.",
     basePriceGhs: 1100,
-    heroImage:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=80",
+    heroImage: "/gallery/corridor-salon-wall.jpg",
     gallery: [
-      "https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80",
+      "/gallery/photo-block-cluster.jpg",
+      "/gallery/canvas-wrap-quartet.jpg",
     ],
     materials: ["wood", "metal-edge"],
     finishes: ["matte-black"],
@@ -236,11 +228,10 @@ export const products: Product[] = [
     longDescription:
       "Precision-milled edge with sub-millimeter tolerance. For statement photography, monochrome works, and gallery walls where silence is luxury.",
     basePriceGhs: 1680,
-    heroImage:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1600&q=80",
+    heroImage: "/gallery/statement-canvas-bedroom.jpg",
     gallery: [
-      "https://images.unsplash.com/photo-1618219971214-38a49e0c1d5d?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1615876234889-fd9cd39b94a8?auto=format&fit=crop&w=1600&q=80",
+      "/gallery/black-frame-grid-six.jpg",
+      "/gallery/mounted-photo-panels.jpg",
     ],
     materials: ["metal-edge", "wood"],
     finishes: ["matte-black", "gloss-charcoal", "gold-accent"],

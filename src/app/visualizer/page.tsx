@@ -15,7 +15,8 @@ export default function VisualizerPage() {
           See the composition before we install a single anchor.
         </h1>
         <p className="mt-5 text-sm leading-relaxed text-kasa-muted dark:text-kasa-sand/80">
-          MVP preview tool: upload, drag frames, switch styles, and test scale. Final curation still happens with our team.
+          Photograph your wall, tell us how wide it is, then try pieces on it at true size. Drag them where you want
+          them, drop your own photo inside, and send the result to the studio when it looks right.
         </p>
       </header>
 
