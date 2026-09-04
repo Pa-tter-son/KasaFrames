@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { submitLead } from "@/lib/lead-client";
+import type { FieldErrors } from "@/lib/leads";
 import { whatsappLink } from "@/lib/utils";
 import { CalendarDays, MessageCircle } from "lucide-react";
 
@@ -23,7 +25,17 @@ const slots = [
 ];
 
 export function ConsultationBooker() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [dimensions, setDimensions] = useState("");
+  const [preferences, setPreferences] = useState("");
+  const [photoCount, setPhotoCount] = useState(0);
+  const [company, setCompany] = useState("");
+  const [pending, setPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fields, setFields] = useState<FieldErrors>({});
   const [slot, setSlot] = useState<string | null>(null);
   const [mode, setMode] = useState<"visit" | "virtual">("visit");
 
@@ -32,6 +44,43 @@ export function ConsultationBooker() {
       `Hello KasaFrames — I'd like to book a ${mode} consultation.${slot ? ` Preferred slot: ${slot}.` : ""}`,
     );
   }, [mode, slot]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    setFields({});
+
+    const result = await submitLead({
+      type: "consultation",
+      name,
+      email,
+      phone,
+      consultationMode: mode,
+      slot: slot ?? undefined,
+      dimensions,
+      preferences,
+      photoCount,
+      company,
+      source: "book-page",
+    });
+
+    setPending(false);
+
+    if (result.ok) {
+      setSubmitted(true);
+      setName("");
+      setPhone("");
+      setEmail("");
+      setDimensions("");
+      setPreferences("");
+      setPhotoCount(0);
+      return;
+    }
+
+    setError(result.error);
+    setFields(result.fields ?? {});
+  }
 
   return (
     <div className="grid gap-12 lg:grid-cols-12">
@@ -42,26 +91,48 @@ export function ConsultationBooker() {
             Share dimensions and references. Our studio responds within 48 hours—often sooner.
           </p>
 
-          <form
-            className="mt-8 grid gap-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSubmitted(true);
-            }}
-          >
+          <form className="mt-8 grid gap-5" onSubmit={handleSubmit} noValidate>
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="name">Full name</Label>
-                <Input id="name" name="name" required placeholder="Ama Serwaa" />
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  placeholder="Ama Serwaa"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  aria-invalid={Boolean(fields.name)}
+                />
+                {fields.name ? <p className="text-xs text-red-600">{fields.name}</p> : null}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" name="phone" required placeholder="+233 …" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  required
+                  placeholder="+233 …"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  aria-invalid={Boolean(fields.phone)}
+                />
+                {fields.phone ? <p className="text-xs text-red-600">{fields.phone}</p> : null}
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required placeholder="you@domain.com" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="you@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(fields.email)}
+              />
+              {fields.email ? <p className="text-xs text-red-600">{fields.email}</p> : null}
             </div>
 
             <div className="grid gap-2">
@@ -79,22 +150,61 @@ export function ConsultationBooker() {
 
             <div className="grid gap-2">
               <Label htmlFor="dims">Wall dimensions (cm)</Label>
-              <Input id="dims" name="dims" placeholder="e.g. 420w × 280h" />
+              <Input
+                id="dims"
+                name="dims"
+                placeholder="e.g. 420w × 280h"
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
+                aria-invalid={Boolean(fields.dimensions)}
+              />
+              {fields.dimensions ? <p className="text-xs text-red-600">{fields.dimensions}</p> : null}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="prefs">Style preferences</Label>
-              <Textarea id="prefs" name="prefs" placeholder="Minimal, warm neutrals, ring frames, stair gallery…" />
+              <Textarea
+                id="prefs"
+                name="prefs"
+                placeholder="Minimal, warm neutrals, ring frames, stair gallery…"
+                value={preferences}
+                onChange={(e) => setPreferences(e.target.value)}
+                aria-invalid={Boolean(fields.preferences)}
+              />
+              {fields.preferences ? <p className="text-xs text-red-600">{fields.preferences}</p> : null}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="photos">Upload wall pictures</Label>
-              <Input id="photos" name="photos" type="file" accept="image/*" multiple />
+              <Input
+                id="photos"
+                name="photos"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setPhotoCount(e.target.files?.length ?? 0)}
+              />
+              <p className="text-xs text-kasa-muted dark:text-kasa-sand/70">
+                We record how many photos you selected and request them over WhatsApp—file uploads arrive with the
+                object-storage step.
+              </p>
+            </div>
+
+            {/* Honeypot: hidden from people, irresistible to bots. */}
+            <div className="hidden" aria-hidden="true">
+              <Label htmlFor="bcompany">Company</Label>
+              <Input
+                id="bcompany"
+                tabIndex={-1}
+                autoComplete="off"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+              />
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="submit" size="lg" className="flex-1">
-                Submit request
+              <Button type="submit" size="lg" className="flex-1" disabled={pending}>
+                {pending ? "Submitting…" : "Submit request"}
               </Button>
               <Button asChild type="button" size="lg" variant="secondary" className="flex-1">
                 <a href={waPrefill} target="_blank" rel="noreferrer">
@@ -104,11 +214,19 @@ export function ConsultationBooker() {
               </Button>
             </div>
 
+            <p aria-live="polite" className="sr-only">
+              {pending ? "Submitting your request" : submitted ? "Request submitted" : error ?? ""}
+            </p>
+
             {submitted ? (
               <p className="rounded-2xl border border-kasa-gold/30 bg-kasa-gold/10 px-4 py-3 text-sm text-kasa-black dark:text-kasa-cream">
-                Thank you—your request is logged for this MVP demo. Wire this form to your CRM or email API in production.
+                Thank you—your request is with the studio.
+                {slot
+                  ? ` We will confirm ${slot} by email or WhatsApp.`
+                  : " We will confirm a slot by email or WhatsApp."}
               </p>
             ) : null}
+            {error ? <p className="text-sm text-red-600">{error}</p> : null}
           </form>
         </div>
       </section>

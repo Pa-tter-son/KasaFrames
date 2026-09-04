@@ -51,9 +51,32 @@ For a luxury brand with rich editorial pages and frequent portfolio updates:
 - `appointments` (consultation bookings)
 - `leads` (form + WhatsApp click attribution)
 
-## API structure (starter)
+## API structure
 
-- `POST /api/leads` — contact + consultation forms
+### `POST /api/leads` — implemented
+
+Backs the contact form (`/contact`) and the consultation booker (`/book`). Both post JSON and render
+server-side field errors inline.
+
+Request body: `type` (`"contact" | "consultation"`), `name`, `email`, plus `phone`, `message`,
+`consultationMode`, `slot`, `dimensions`, `preferences`, `photoCount`, `source`. Responses are
+`201 {ok, id}`, `400 {ok, error, fields}`, `429` (10 posts per IP per minute), or `502` when storage
+rejects the write.
+
+Validation and persistence live in `src/lib/leads.ts`. `saveLead()` forwards to `LEADS_WEBHOOK_URL`
+(Airtable/Zapier/Make/Slack) when set, with an optional `LEADS_WEBHOOK_TOKEN` bearer, and otherwise
+logs a structured `[lead]` line visible in the Vercel runtime logs. **To move to Postgres, write the
+INSERT inside `saveLead()`—the route and both forms stay untouched.**
+
+Two caveats worth knowing:
+
+- The rate limiter is an in-memory `Map` in the route, so it is per-instance. It stops double-submits
+  and casual spam; put Vercel WAF or an Upstash-backed limiter in front for real volume.
+- The consultation form records how many photos the visitor selected but does not upload them—that
+  needs the object-storage step below.
+
+### Still to build
+
 - `POST /api/cart/checkout` — create Paystack session
 - `POST /api/webhooks/paystack` — payment confirmation
 - `POST /api/webhooks/calcom` — booking confirmations

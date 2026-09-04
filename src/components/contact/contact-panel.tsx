@@ -5,13 +5,51 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { submitLead } from "@/lib/lead-client";
+import type { FieldErrors } from "@/lib/leads";
 import { whatsappLink } from "@/lib/utils";
 import { Instagram, MessageCircle, Phone } from "lucide-react";
 
 const mapUrl = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL;
 
 export function ContactPanel() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [company, setCompany] = useState("");
+  const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fields, setFields] = useState<FieldErrors>({});
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    setFields({});
+
+    const result = await submitLead({
+      type: "contact",
+      name,
+      email,
+      message,
+      company,
+      source: "contact-page",
+    });
+
+    setPending(false);
+
+    if (result.ok) {
+      setSent(true);
+      setName("");
+      setEmail("");
+      setMessage("");
+      return;
+    }
+
+    setError(result.error);
+    setFields(result.fields ?? {});
+  }
 
   return (
     <div className="grid gap-10 lg:grid-cols-12">
@@ -20,33 +58,71 @@ export function ContactPanel() {
           <h2 className="font-display text-2xl font-semibold">Send a note</h2>
           <p className="mt-2 text-sm text-kasa-muted dark:text-kasa-sand/80">We reply quickly—especially on WhatsApp.</p>
 
-          <form
-            className="mt-8 grid gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-          >
+          <form className="mt-8 grid gap-4" onSubmit={handleSubmit} noValidate>
             <div className="grid gap-2">
               <Label htmlFor="cname">Name</Label>
-              <Input id="cname" required placeholder="Your name" />
+              <Input
+                id="cname"
+                required
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                aria-invalid={Boolean(fields.name)}
+              />
+              {fields.name ? <p className="text-xs text-red-600">{fields.name}</p> : null}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cemail">Email</Label>
-              <Input id="cemail" type="email" required placeholder="you@domain.com" />
+              <Input
+                id="cemail"
+                type="email"
+                required
+                placeholder="you@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(fields.email)}
+              />
+              {fields.email ? <p className="text-xs text-red-600">{fields.email}</p> : null}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cmsg">Message</Label>
-              <Textarea id="cmsg" required placeholder="Tell us about your wall project…" />
+              <Textarea
+                id="cmsg"
+                required
+                placeholder="Tell us about your wall project…"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                aria-invalid={Boolean(fields.message)}
+              />
+              {fields.message ? <p className="text-xs text-red-600">{fields.message}</p> : null}
             </div>
-            <Button type="submit" className="w-full">
-              Send message
+
+            {/* Honeypot: hidden from people, irresistible to bots. */}
+            <div className="hidden" aria-hidden="true">
+              <Label htmlFor="ccompany">Company</Label>
+              <Input
+                id="ccompany"
+                tabIndex={-1}
+                autoComplete="off"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={pending}>
+              {pending ? "Sending…" : "Send message"}
             </Button>
+
+            <p aria-live="polite" className="sr-only">
+              {pending ? "Sending your message" : sent ? "Message sent" : error ?? ""}
+            </p>
+
             {sent ? (
-              <p className="text-sm text-kasa-muted">
-                Thanks—this MVP demo doesn’t POST yet. Wire this form to your API route or form provider.
+              <p className="rounded-2xl border border-kasa-gold/30 bg-kasa-gold/10 px-4 py-3 text-sm text-kasa-black dark:text-kasa-cream">
+                Thank you—your note is with the studio. We reply within 48 hours, often sooner.
               </p>
             ) : null}
+            {error ? <p className="text-sm text-red-600">{error}</p> : null}
           </form>
 
           <div className="mt-8 grid gap-3">
