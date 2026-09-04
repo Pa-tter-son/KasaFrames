@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveOrder } from "@/lib/orders";
+import { recordPendingOrder } from "@/lib/orders";
 import { initializeTransaction, isPaystackConfigured, newOrderReference } from "@/lib/paystack";
 import { priceCart, toPesewas } from "@/lib/pricing";
 
@@ -67,17 +67,12 @@ export async function POST(request: Request) {
     });
 
     // Recorded before the redirect so an abandoned payment is still visible.
-    await saveOrder(
-      {
-        reference: transaction.reference,
-        status: "pending",
-        email: normalisedEmail,
-        amountGhs: priced.cart.subtotalGhs,
-        lines: priced.cart.lines,
-        createdAt: new Date().toISOString(),
-      },
-      "order",
-    );
+    await recordPendingOrder({
+      reference: transaction.reference,
+      email: normalisedEmail,
+      amountGhs: priced.cart.subtotalGhs,
+      lines: priced.cart.lines,
+    });
 
     return NextResponse.json(
       {

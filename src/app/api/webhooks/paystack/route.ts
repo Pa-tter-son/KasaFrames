@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveOrder, type OrderStatus } from "@/lib/orders";
+import { recordPayment } from "@/lib/orders";
 import { isPaystackConfigured, verifyWebhookSignature } from "@/lib/paystack";
 
 export const runtime = "nodejs";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 interface PaystackEvent {
   event?: string;
   data?: {
+    id?: number | string;
     reference?: string;
     amount?: number;
     paid_at?: string;
@@ -16,9 +17,9 @@ interface PaystackEvent {
   };
 }
 
-const STATUS_BY_EVENT: Record<string, OrderStatus> = {
-  "charge.success": "paid",
-  "charge.failed": "failed",
+const HANDLED: Record<string, { paid: boolean }> = {
+  "charge.success": { paid: true },
+  "charge.failed": { paid: false },
 };
 
 export async function POST(request: Request) {
@@ -44,31 +45,45 @@ export async function POST(request: Request) {
 
   const name = event.event ?? "unknown";
   const reference = event.data?.reference;
-  const status = STATUS_BY_EVENT[name];
+  const handled = HANDLED[name];
 
   // Anything we don't act on still gets a 200, or Paystack keeps retrying it.
-  if (!status || !reference) {
+  if (!handled || !reference) {
     return NextResponse.json({ ok: true, ignored: name });
   }
 
   try {
-    await saveOrder(
-      {
+    const outcome = await recordPayment({
+      // The transaction id makes a replayed delivery recognisable; the
+      // reference alone would collide across a retry of a different event.
+      eventKey: `${name}:${event.data?.id ?? reference}`,
+      reference,
+      event: name,
+      paid: handled.paid,
+      amountGhs: (event.data?.amount ?? 0) / 100,
+      paidAt: event.data?.paid_at,
+      channel: event.data?.channel,
+      rawPayload: rawBody,
+    });
+
+    if (outcome.result === "amount_mismatch") {
+      // Never fulfil on a mismatch: the order is parked for a human. 200 because
+      // a retry would land in exactly the same place.
+      console.error(
+        "[paystack] amount mismatch",
         reference,
-        event: name,
-        status,
-        amountGhs: (event.data?.amount ?? 0) / 100,
-        paidAt: event.data?.paid_at,
-        channel: event.data?.channel,
-        receivedAt: new Date().toISOString(),
-      },
-      "payment",
-    );
+        `expected ${outcome.expectedPesewas} pesewas, paid ${outcome.paidPesewas}`,
+      );
+    }
+
+    if (outcome.result === "unknown_reference") {
+      console.error("[paystack] payment for an unknown reference", reference);
+    }
+
+    return NextResponse.json({ ok: true, outcome: outcome.result });
   } catch (error) {
     // A 500 asks Paystack to retry, which is what we want if storage is down.
     console.error("[paystack] failed to record payment", reference, error);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }

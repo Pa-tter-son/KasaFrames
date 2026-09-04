@@ -1,3 +1,6 @@
+import { db, isDatabaseConfigured } from "@/lib/db";
+import { insertLead } from "@/lib/db/queries";
+
 export type LeadType = "contact" | "consultation";
 export type ConsultationMode = "visit" | "virtual";
 
@@ -126,11 +129,10 @@ export function parseLead(body: unknown): { lead: LeadInput } | { errors: FieldE
 /**
  * Persists a lead.
  *
- * Today this forwards to `LEADS_WEBHOOK_URL` (Airtable/Zapier/Make/Slack) when
- * configured, and otherwise logs a structured line that shows up in the Vercel
- * runtime logs. Both paths are intentionally behind this one function: swapping
- * in Postgres means writing the INSERT here, with no change to the route or the
- * forms.
+ * Postgres when DATABASE_URL is set, otherwise the LEADS_WEBHOOK_URL forward
+ * (Airtable/Zapier/Make/Slack), otherwise a structured line in the runtime logs.
+ * Every path is behind this one function, so the route and the forms never need
+ * to know which is active.
  */
 export async function saveLead(input: LeadInput): Promise<Lead> {
   const lead: Lead = {
@@ -138,6 +140,11 @@ export async function saveLead(input: LeadInput): Promise<Lead> {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   };
+
+  if (isDatabaseConfigured()) {
+    await insertLead(db(), input);
+    return lead;
+  }
 
   const webhookUrl = process.env.LEADS_WEBHOOK_URL;
 

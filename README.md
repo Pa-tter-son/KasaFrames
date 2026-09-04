@@ -42,14 +42,49 @@ For a luxury brand with rich editorial pages and frequent portfolio updates:
 - **Queue** (SQS/Cloudflare Queues) for email + CRM fan-out.
 - **Auth** (Clerk/Auth.js) when customer dashboards ship.
 
-## Database structure (starter)
+## Database
+
+Schema lives in `src/lib/db/schema.sql`—`orders`, `order_items`, `payment_events`, and `leads`.
+Every statement is idempotent, so applying it twice is safe:
+
+```bash
+psql "$DATABASE_URL" -f src/lib/db/schema.sql
+```
+
+Set `DATABASE_URL` and both leads and orders write to Postgres; leave it unset and they fall back to
+the webhook forward, then to structured logs. Nothing else in the app changes.
+
+Money is stored in **pesewas as integers**. Cedis in floating point drift, and Paystack speaks the
+minor unit anyway.
+
+### How a payment is reconciled
+
+1. Checkout inserts the order as `pending` with the amount it priced, before the customer leaves for
+   Paystack.
+2. The webhook inserts into `payment_events`, keyed on `event` + Paystack's transaction id. A unique
+   violation there means this is a replayed delivery, and it stops.
+3. The order is marked paid by a single guarded statement:
+
+   ```sql
+   UPDATE orders SET status = 'paid', ...
+    WHERE reference = $1 AND amount_pesewas = $2 AND status <> 'paid'
+   ```
+
+   The amount check and the write are one atomic statement, so concurrent deliveries can't race, and
+   a second delivery updates nothing.
+4. A payment whose amount doesn't match parks the order in `amount_mismatch` for a human. It is
+   never marked paid. Underpayment and overpayment are both treated this way.
+5. A stray `charge.failed` cannot un-pay a paid order.
+
+`npm run test:payments` runs these rules against an in-memory Postgres (`pg-mem`); it is the fastest
+way to see the intended behaviour, and it needs no database.
+
+### Still to model
 
 - `users` (optional until accounts)
-- `products`, `product_variants` (size/material/finish matrix)
-- `carts`, `cart_items`
-- `orders`, `order_items`, `payments`
-- `appointments` (consultation bookings)
-- `leads` (form + WhatsApp click attribution)
+- `products`, `product_variants` (size/material/finish matrix)—catalog is still a TS file
+- `carts`, `cart_items` (the cart is localStorage today)
+- `appointments` (consultation bookings; currently captured as leads)
 
 ## API structure
 
@@ -63,10 +98,10 @@ Request body: `type` (`"contact" | "consultation"`), `name`, `email`, plus `phon
 `201 {ok, id}`, `400 {ok, error, fields}`, `429` (10 posts per IP per minute), or `502` when storage
 rejects the write.
 
-Validation and persistence live in `src/lib/leads.ts`. `saveLead()` forwards to `LEADS_WEBHOOK_URL`
-(Airtable/Zapier/Make/Slack) when set, with an optional `LEADS_WEBHOOK_TOKEN` bearer, and otherwise
-logs a structured `[lead]` line visible in the Vercel runtime logs. **To move to Postgres, write the
-INSERT inside `saveLead()`—the route and both forms stay untouched.**
+Validation and persistence live in `src/lib/leads.ts`. `saveLead()` writes to Postgres when
+`DATABASE_URL` is set; otherwise it forwards to `LEADS_WEBHOOK_URL` (Airtable/Zapier/Make/Slack,
+with an optional `LEADS_WEBHOOK_TOKEN` bearer), and otherwise logs a structured `[lead]` line
+visible in the Vercel runtime logs.
 
 Two caveats worth knowing:
 
@@ -105,13 +140,7 @@ retries. Bad signatures get 401.
 
 Test keys (`sk_test_…`) exercise the whole flow with Paystack's test cards and test MoMo numbers.
 
-Two gaps to close before real money moves:
-
-- **Payments are recorded, not reconciled.** `saveOrder()` logs or forwards; nothing compares the
-  paid amount against the pending order. With Postgres, upsert on `reference` and assert the amount
-  matches before marking an order paid—Paystack can deliver the same webhook more than once, so that
-  write must be idempotent.
-- **No stock, tax, or delivery-fee model.** The charge is the cart subtotal exactly.
+Remaining gap: **no stock, tax, or delivery-fee model.** The charge is the cart subtotal exactly.
 
 ### Still to build
 
