@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { WallStage } from "@/components/visualizer/wall-stage";
 import { getProduct, type ProductId } from "@/lib/data/catalog";
-import { detectWallQuad, FLAT_WALL, imageToPlane, type Point, type Quad } from "@/lib/perspective";
+import { detectWallQuad, fittedQuad, FLAT_WALL, imageToPlane, type Point, type Quad } from "@/lib/perspective";
 import { formatGhs } from "@/lib/utils";
 import {
   CM_PER_INCH,
@@ -57,6 +57,8 @@ export function WallVisualizer() {
   const [wallCm, setWallCm] = React.useState(SAMPLE_ROOMS[0].wallCm);
   const [wallHeightCm, setWallHeightCm] = React.useState(280);
   const [quad, setQuad] = React.useState<Quad>(FLAT_WALL);
+  const [quadMode, setQuadMode] = React.useState<"fitted" | "custom">("fitted");
+  const [imgSize, setImgSize] = React.useState({ w: 0, h: 0 });
   const [adjustingWall, setAdjustingWall] = React.useState(false);
   const [adjustingArt, setAdjustingArt] = React.useState(false);
   const [wallNote, setWallNote] = React.useState<string | null>(null);
@@ -85,6 +87,24 @@ export function WallVisualizer() {
     }
   }, [product, sizeLabel]);
 
+  // Track the photo's rendered size so an untouched wall can be fitted to it.
+  React.useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const measure = () => setImgSize({ w: img.clientWidth, h: img.clientHeight });
+    const observer = new ResizeObserver(measure);
+    observer.observe(img);
+    measure();
+    return () => observer.disconnect();
+  }, [roomSrc]);
+
+  // While nobody has placed the corners themselves, keep the wall rectangle
+  // shaped like the wall, so a portrait piece stays portrait.
+  React.useEffect(() => {
+    if (quadMode !== "fitted" || imgSize.w === 0 || imgSize.h === 0) return;
+    setQuad(fittedQuad(imgSize.w, imgSize.h, wallCm, wallHeightCm));
+  }, [quadMode, imgSize, wallCm, wallHeightCm]);
+
   /** Reads the wall out of the photograph; falls back to a flat rectangle. */
   const detect = React.useCallback((announce: boolean) => {
     const img = imgRef.current;
@@ -96,9 +116,10 @@ export function WallVisualizer() {
     const found = detectWallQuad(img);
     if (found) {
       setQuad(found);
+      setQuadMode("custom");
       setWallNote("We read the wall from your photo. Drag the gold corners if it is not quite right.");
     } else {
-      setQuad(FLAT_WALL);
+      setQuadMode("fitted");
       if (announce) {
         setWallNote("We could not read the angle of this wall. Drag the gold corners onto it and the frames will follow.");
       }
@@ -110,7 +131,7 @@ export function WallVisualizer() {
     if (cm) setWallCm(cm);
     setPieces([]);
     setSelectedId(null);
-    setQuad(FLAT_WALL);
+    setQuadMode("fitted");
     setWallNote(null);
     pendingDetect.current = true;
   }
@@ -279,6 +300,7 @@ export function WallVisualizer() {
       const at = pointerOnImage(event);
       if (!at) return;
       const index = cornerRef.current;
+      setQuadMode("custom");
       setQuad((prev) => {
         const next = [...prev] as Quad;
         next[index] = { x: clamp(at.x, 0, 1), y: clamp(at.y, 0, 1) };
@@ -557,7 +579,7 @@ export function WallVisualizer() {
             <button
               type="button"
               onClick={() => {
-                setQuad(FLAT_WALL);
+                setQuadMode("fitted");
                 setWallNote(null);
               }}
               className="text-left text-[11px] text-kasa-muted underline-offset-4 hover:underline dark:text-kasa-sand/70"

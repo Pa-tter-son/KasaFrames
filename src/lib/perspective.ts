@@ -27,6 +27,40 @@ export const FLAT_WALL: Quad = [
   { x: 0.06, y: 0.9 },
 ];
 
+/**
+ * A head-on wall rectangle whose shape matches the wall's real proportions.
+ *
+ * The plane carries a wallCm × wallHeightCm rectangle, so if the quad it lands
+ * on has a different shape, everything inside is stretched: a portrait frame on
+ * a tall narrow wall comes out wide and short. Fitting the default quad to the
+ * wall's own aspect keeps pieces true before anyone touches a corner.
+ */
+export function fittedQuad(imageW: number, imageH: number, wallCm: number, wallHeightCm: number): Quad {
+  if (imageW <= 0 || imageH <= 0 || wallCm <= 0 || wallHeightCm <= 0) return FLAT_WALL;
+
+  const wallAspect = wallCm / wallHeightCm;
+  const imageAspect = imageW / imageH;
+  const fill = 0.88;
+
+  // Fit the wall's shape inside the photo, then centre it.
+  let w = fill;
+  let h = (fill * imageAspect) / wallAspect;
+  if (h > fill) {
+    h = fill;
+    w = (fill * wallAspect) / imageAspect;
+  }
+
+  const x0 = (1 - w) / 2;
+  const y0 = (1 - h) / 2;
+
+  return [
+    { x: x0, y: y0 },
+    { x: x0 + w, y: y0 },
+    { x: x0 + w, y: y0 + h },
+    { x: x0, y: y0 + h },
+  ];
+}
+
 /** 3×3 projective transform, row major, with the bottom-right term fixed at 1. */
 export type Homography = [number, number, number, number, number, number, number, number];
 
