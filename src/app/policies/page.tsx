@@ -19,6 +19,7 @@ const sections = [
   { id: "timelines", label: "Timelines" },
   { id: "installation", label: "Delivery & installation" },
   { id: "changes", label: "Changes & cancellations" },
+  { id: "refunds", label: "Refunds & remakes" },
   { id: "photographs", label: "Your photographs" },
   { id: "privacy", label: "Privacy" },
 ];
@@ -164,6 +165,59 @@ export default function PoliciesPage() {
                 <strong>Before that point, changes and cancellations cost nothing.</strong> Tell us and we will hold
                 the order. After production has started, talk to us as early as you can and we will tell you honestly
                 what can still be changed and what has already been committed.
+              </p>
+            </Section>
+
+            <Section id="refunds" title="Refunds and remakes">
+              <p>
+                Every frame is printed and built for one customer, which is why this is not a shop where anything
+                can go back on a shelf. What follows is the line we hold in both directions.
+              </p>
+
+              <dl className="mt-5 grid gap-4">
+                <Term term="If we got it wrong — we remake it, free">
+                  Wrong size, wrong finish, the wrong image, a crooked mount, a scratch, a bad print, damage in
+                  transit: tell us and we remake the piece at our cost. If you would rather not wait for a remake, we
+                  refund that piece in full. This is not time-limited by us for a manufacturing fault — but tell us
+                  as soon as you see it, and within <strong>7 days of delivery</strong> for anything that could have
+                  happened after we left, like transit damage. A photograph is usually all the evidence we need.
+                </Term>
+
+                <Term term="Before production — full refund of your deposit">
+                  Nothing is ordered until your deposit clears. Cancel before we place the order with the
+                  manufacturer and you get <strong>100% of your deposit back</strong>, no questions and no fee.
+                </Term>
+
+                <Term term="After production has started — the deposit covers the work">
+                  Once the frames are being made, the materials and labour are committed and we have already paid
+                  for them. If you cancel at that point we keep the deposit, <strong>you owe nothing further</strong>,
+                  and the finished pieces are yours to collect if you want them. If we have not yet started on part
+                  of a larger order, we refund the deposit on that part.
+                </Term>
+
+                <Term term="Changed your mind about a finished frame">
+                  A correctly made piece cannot be resold, so a change of heart is not something we can refund. What
+                  we will do is put the value toward a replacement print in the same frame — you pay the difference
+                  in materials, not the whole piece again. Ask within <strong>14 days of delivery</strong>.
+                </Term>
+
+                <Term term="If the image you sent us was the problem">
+                  Low-resolution or poorly cropped files are the one thing we cannot fix after printing. We will
+                  always warn you before printing if a file is too small, and we will not print something we expect
+                  you to be unhappy with. If we printed what you approved and the file was the limitation, a reprint
+                  is charged at the frame price without the installation fee.
+                </Term>
+
+                <Term term="If we cancel or cannot deliver">
+                  If we cannot complete your order for any reason, you receive a <strong>full refund of everything
+                  paid</strong>, including the deposit.
+                </Term>
+              </dl>
+
+              <p className="mt-5">
+                Refunds go back the way they came — the same card, mobile money wallet or bank account — within{" "}
+                <strong>5 to 10 working days</strong> of us agreeing them. Site visit transport already travelled is
+                not refundable, since that fare has been paid to the driver.
               </p>
             </Section>
 

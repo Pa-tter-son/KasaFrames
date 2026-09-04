@@ -33,5 +33,12 @@
     "sizes": "Mixed, 10 × 15 to 40 × 50 cm",
     "blurb": "Decades of family photographs, rescued and reprinted, hung corner to corner. The most requested project we take on.",
     "order": 53
+  },
+  "adinkra-symbol-panel.svg": {
+    "title": "Adinkra Panel — Nine Symbols",
+    "room": "Sitting room",
+    "sizes": "24 × 36 inches",
+    "blurb": "Nine Adinkra symbols, each in its own colour block on a cream ground. Drawn as vectors, so it prints crisp at any size—and the symbols can be swapped for the ones that mean something to your family.",
+    "order": 3
   }
 }

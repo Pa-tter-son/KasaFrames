@@ -112,10 +112,8 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
                 className="group block w-full overflow-hidden rounded-[2rem] border border-kasa-black/10 bg-kasa-black text-left transition hover:border-kasa-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-kasa-gold dark:border-white/10"
               >
                 <div className="relative w-full" style={{ aspectRatio: item.ratio }}>
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
+                  <GalleryImage
+                    item={item}
                     className="object-cover transition duration-700 group-hover:scale-[1.03]"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
@@ -143,13 +141,7 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
             <div className="grid max-h-[85vh] gap-0 overflow-y-auto md:grid-cols-5">
               <div className="relative md:col-span-3">
                 <div className="relative w-full bg-kasa-black" style={{ aspectRatio: open.ratio }}>
-                  <Image
-                    src={open.image}
-                    alt={open.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 60vw"
-                  />
+                  <GalleryImage item={open} className="object-cover" sizes="(max-width: 768px) 100vw, 60vw" />
                 </div>
               </div>
 
@@ -213,6 +205,30 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
       </Dialog>
     </div>
   );
+}
+
+/**
+ * next/image refuses SVG unless the optimizer is told to allow it, which is a
+ * setting worth avoiding site-wide. Our own vector artwork is served directly
+ * instead—it is already a few tens of KB and needs no resizing.
+ */
+function GalleryImage({
+  item,
+  className,
+  sizes,
+}: {
+  item: GalleryItem;
+  className: string;
+  sizes: string;
+}) {
+  if (item.image.toLowerCase().endsWith(".svg")) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={item.image} alt={item.title} className={`absolute inset-0 h-full w-full ${className}`} />
+    );
+  }
+
+  return <Image src={item.image} alt={item.title} fill className={className} sizes={sizes} />;
 }
 
 function FilterChip({

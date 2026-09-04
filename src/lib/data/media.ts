@@ -13,7 +13,7 @@ import { finishFamilies, type FinishFamily, type GalleryItem } from "@/lib/data/
  */
 
 const MEDIA_ROOT = path.join(process.cwd(), "public", "media");
-const IMAGE_PATTERN = /\.(jpe?g|png|webp|avif)$/i;
+const IMAGE_PATTERN = /\.(jpe?g|png|webp|avif|svg)$/i;
 
 /** `rooms` holds the visualizer's sample walls, which are not gallery work. */
 const NON_GALLERY_FOLDERS = new Set(["rooms"]);
@@ -42,6 +42,17 @@ function readCaptions(dir: string): Record<string, Caption> {
 /** Width ÷ height, read from the file header so the grid never jumps. */
 function imageRatio(file: string): number {
   try {
+    if (file.toLowerCase().endsWith(".svg")) {
+      const head = fs.readFileSync(file, "utf8").slice(0, 2000);
+      const viewBox = head.match(/viewBox="([\d.\-\s]+)"/i)?.[1]?.trim().split(/\s+/);
+      if (viewBox?.length === 4) {
+        const w = Number(viewBox[2]);
+        const h = Number(viewBox[3]);
+        if (w > 0 && h > 0) return w / h;
+      }
+      return 1;
+    }
+
     const buf = fs.readFileSync(file);
 
     if (buf.length > 24 && buf.toString("ascii", 12, 16) === "IHDR") {
