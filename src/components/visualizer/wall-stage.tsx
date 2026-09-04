@@ -196,7 +196,19 @@ export function FrameView({
         <div className="relative h-full w-full overflow-hidden">
           {piece.artUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={piece.artUrl} alt="" className="h-full w-full object-cover" draggable={false} />
+            <img
+              src={piece.artUrl}
+              alt=""
+              className="h-full w-full"
+              draggable={false}
+              style={{
+                objectFit: piece.artFit ?? "cover",
+                // Pan first, then zoom about the centre, so the sliders behave
+                // the way a phone's photo cropper does.
+                transform: `translate(${piece.artX ?? 0}%, ${piece.artY ?? 0}%) scale(${piece.artZoom ?? 1})`,
+                transformOrigin: "center",
+              }}
+            />
           ) : (
             <div
               className="h-full w-full"

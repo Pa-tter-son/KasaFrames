@@ -19,6 +19,7 @@ import {
   CM_PER_INCH,
   costOf,
   downscaleImage,
+  artPanLimit,
   pieceCm,
   saveComposition,
   STYLES,
@@ -28,6 +29,7 @@ import {
 } from "@/lib/visualizer";
 import {
   Copy,
+  Crop,
   Eye,
   ImagePlus,
   LayoutGrid,
@@ -56,6 +58,7 @@ export function WallVisualizer() {
   const [wallHeightCm, setWallHeightCm] = React.useState(280);
   const [quad, setQuad] = React.useState<Quad>(FLAT_WALL);
   const [adjustingWall, setAdjustingWall] = React.useState(false);
+  const [adjustingArt, setAdjustingArt] = React.useState(false);
   const [wallNote, setWallNote] = React.useState<string | null>(null);
   const [pieces, setPieces] = React.useState<Piece[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -68,6 +71,7 @@ export function WallVisualizer() {
   const imgRef = React.useRef<HTMLImageElement>(null);
   const dragRef = React.useRef<{ id: string; dxPct: number; dyPct: number } | null>(null);
   const cornerRef = React.useRef<number | null>(null);
+  const artRef = React.useRef<{ id: string; x: number; y: number; artX: number; artY: number } | null>(null);
   const pendingDetect = React.useRef(false);
 
   const product = getProduct(STYLE_PRODUCT[style]);
@@ -238,9 +242,29 @@ export function WallVisualizer() {
     if (!piece || !at) return;
 
     setSelectedId(id);
-    dragRef.current = { id, dxPct: at.x - piece.xPct, dyPct: at.y - piece.yPct };
+
+    // While the photo is being framed, a drag inside the piece moves the photo
+    // rather than the frame—the frame is where the customer wants it by then.
+    if (adjustingArt && piece.id === selectedId && piece.artUrl) {
+      artRef.current = { id, x: at.x, y: at.y, artX: piece.artX ?? 0, artY: piece.artY ?? 0 };
+    } else {
+      dragRef.current = { id, dxPct: at.x - piece.xPct, dyPct: at.y - piece.yPct };
+    }
+
     (event.target as Element).setPointerCapture?.(event.pointerId);
     event.preventDefault();
+  };
+
+  /** Zooming the photo with the wheel, the way any photo cropper behaves. */
+  const onWheel = (event: React.WheelEvent) => {
+    if (!adjustingArt || !selected?.artUrl) return;
+    const zoom = clamp((selected.artZoom ?? 1) - event.deltaY * 0.0015, 1, 4);
+    const limit = artPanLimit({ ...selected, artZoom: zoom });
+    updateSelected({
+      artZoom: zoom,
+      artX: clamp(selected.artX ?? 0, -limit, limit),
+      artY: clamp(selected.artY ?? 0, -limit, limit),
+    });
   };
 
   const onCornerPointerDown = (index: number) => (event: React.PointerEvent) => {
@@ -260,6 +284,34 @@ export function WallVisualizer() {
         next[index] = { x: clamp(at.x, 0, 1), y: clamp(at.y, 0, 1) };
         return next;
       });
+      return;
+    }
+
+    const art = artRef.current;
+    if (art) {
+      const at = pointerOnWall(event);
+      const piece = pieces.find((p) => p.id === art.id);
+      if (!at || !piece) return;
+
+      // Pointer movement arrives in wall percent; the photo pans in percent of
+      // its own frame, so scale by how much wall this piece covers.
+      const { wCm, hCm } = pieceCm(piece);
+      const widthPct = (wCm / wallCm) * 100;
+      const heightPct = (hCm / wallHeightCm) * 100;
+      if (widthPct === 0 || heightPct === 0) return;
+
+      const limit = artPanLimit(piece);
+      setPieces((prev) =>
+        prev.map((p) =>
+          p.id === art.id
+            ? {
+                ...p,
+                artX: clamp(art.artX + ((at.x - art.x) / widthPct) * 100, -limit, limit),
+                artY: clamp(art.artY + ((at.y - art.y) / heightPct) * 100, -limit, limit),
+              }
+            : p,
+        ),
+      );
       return;
     }
 
@@ -293,6 +345,7 @@ export function WallVisualizer() {
   const endDrag = () => {
     dragRef.current = null;
     cornerRef.current = null;
+    artRef.current = null;
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -360,6 +413,7 @@ export function WallVisualizer() {
           interactive
           tabIndex={0}
           onKeyDown={onKeyDown}
+          onWheel={onWheel}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
@@ -675,6 +729,110 @@ export function WallVisualizer() {
                 {selected.artUrl ? "Change the photo inside" : "Put your photo inside"}
                 <input type="file" accept="image/*" className="sr-only" onChange={(e) => onArtFile(e.target.files?.[0])} />
               </label>
+
+              {selected.artUrl ? (
+                <div className="grid gap-3 rounded-2xl border border-kasa-black/10 p-4 dark:border-white/10">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Frame the photo</Label>
+                    <Button
+                      variant={adjustingArt ? "primary" : "outline"}
+                      size="sm"
+                      onClick={() => setAdjustingArt((v) => !v)}
+                    >
+                      <Crop className="h-3.5 w-3.5" />
+                      {adjustingArt ? "Done" : "Adjust"}
+                    </Button>
+                  </div>
+
+                  {adjustingArt ? (
+                    <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+                      Drag inside the frame to move the photo, or scroll to zoom. The frame stays put while you do.
+                    </p>
+                  ) : null}
+
+                  <div className="grid gap-1.5">
+                    <Label className="flex items-center justify-between text-xs">
+                      <span>Zoom</span>
+                      <span className="font-mono text-[11px] text-kasa-muted">
+                        {(selected.artZoom ?? 1).toFixed(2)}×
+                      </span>
+                    </Label>
+                    <input
+                      type="range"
+                      min={1}
+                      max={4}
+                      step={0.05}
+                      value={selected.artZoom ?? 1}
+                      onChange={(e) => {
+                        const zoom = Number(e.target.value);
+                        const limit = artPanLimit({ ...selected, artZoom: zoom });
+                        updateSelected({
+                          artZoom: zoom,
+                          artX: clamp(selected.artX ?? 0, -limit, limit),
+                          artY: clamp(selected.artY ?? 0, -limit, limit),
+                        });
+                      }}
+                      className="accent-kasa-gold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-1.5">
+                      <Label className="text-[11px]">Left / right</Label>
+                      <input
+                        type="range"
+                        min={-artPanLimit(selected)}
+                        max={artPanLimit(selected)}
+                        step={0.5}
+                        value={selected.artX ?? 0}
+                        disabled={artPanLimit(selected) === 0}
+                        onChange={(e) => updateSelected({ artX: Number(e.target.value) })}
+                        className="accent-kasa-gold disabled:opacity-40"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-[11px]">Up / down</Label>
+                      <input
+                        type="range"
+                        min={-artPanLimit(selected)}
+                        max={artPanLimit(selected)}
+                        step={0.5}
+                        value={selected.artY ?? 0}
+                        disabled={artPanLimit(selected) === 0}
+                        onChange={(e) => updateSelected({ artY: Number(e.target.value) })}
+                        className="accent-kasa-gold disabled:opacity-40"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        updateSelected({
+                          artFit: (selected.artFit ?? "cover") === "cover" ? "contain" : "cover",
+                        })
+                      }
+                    >
+                      {(selected.artFit ?? "cover") === "cover" ? "Show whole photo" : "Fill the frame"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSelected({ artZoom: 1, artX: 0, artY: 0, artFit: "cover" })}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+                    {(selected.artFit ?? "cover") === "cover"
+                      ? "Filling the frame crops the edges. Zoom in to choose which part is kept."
+                      : "The whole photo is visible, so there may be a margin inside the frame."}
+                  </p>
+                </div>
+              ) : null}
 
               <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
                 {(() => {

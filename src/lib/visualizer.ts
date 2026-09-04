@@ -48,6 +48,13 @@ export interface Piece {
   rotated: boolean;
   /** The customer's own photo, as a data URL so it survives the page hop. */
   artUrl?: string;
+  /** How the photo sits in the aperture: 1 fills it, above 1 crops in closer. */
+  artZoom?: number;
+  /** Pan, as a percentage of the frame opening. 0,0 is centred. */
+  artX?: number;
+  artY?: number;
+  /** "cover" crops to fill the frame; "contain" keeps the whole photo visible. */
+  artFit?: "cover" | "contain";
 }
 
 export interface Composition {
@@ -59,6 +66,13 @@ export interface Composition {
   installation: boolean;
   pieces: Piece[];
   savedAt: string;
+}
+
+/** How far a photo may be panned before it would leave the opening. */
+export function artPanLimit(piece: Piece) {
+  const zoom = piece.artZoom ?? 1;
+  // At 1x in cover mode there is nothing to move; zooming in buys room to pan.
+  return piece.artFit === "contain" ? 50 : Math.max(0, (zoom - 1) * 50);
 }
 
 /** Frame dimensions in cm, accounting for a piece hung on its side. */
