@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { HomeHero } from "@/components/home/home-hero";
-import { BeforeAfterSection } from "@/components/home/before-after";
+import { VisualizerPromo } from "@/components/home/visualizer-promo";
 import { InteractiveGallery } from "@/components/home/interactive-gallery";
 import { CollectionsPreview } from "@/components/home/collections-preview";
 import { ProcessSection } from "@/components/home/process-section";
-import { TestimonialsSection } from "@/components/home/testimonials-section";
+import { CommitmentsSection } from "@/components/home/commitments-section";
 import { InstallShowcase } from "@/components/home/install-showcase";
 import { FaqSection } from "@/components/home/faq-section";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,11 @@ export default function HomePage() {
   return (
     <>
       <HomeHero />
-      <BeforeAfterSection />
+      <VisualizerPromo />
       <InteractiveGallery />
       <CollectionsPreview />
       <ProcessSection />
-      <TestimonialsSection />
+      <CommitmentsSection />
       <InstallShowcase />
       <FaqSection />
       <section className="mx-auto max-w-7xl px-4 pb-24 pt-4 sm:px-6 lg:px-8">

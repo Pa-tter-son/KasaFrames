@@ -47,7 +47,7 @@ export default function PoliciesPage() {
                 <li key={s.id}>
                   <a
                     href={`#${s.id}`}
-                    className="text-kasa-muted underline-offset-4 transition hover:text-kasa-black hover:underline dark:text-kasa-sand/80 dark:hover:text-kasa-cream"
+                    className="inline-block py-1.5 text-kasa-muted underline-offset-4 transition hover:text-kasa-black hover:underline dark:text-kasa-sand/80 dark:hover:text-kasa-cream sm:py-0.5"
                   >
                     {s.label}
                   </a>

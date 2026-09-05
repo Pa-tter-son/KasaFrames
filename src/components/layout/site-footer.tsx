@@ -44,7 +44,11 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-2 text-sm text-kasa-sand/80">
                 {footerNav.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="transition hover:text-kasa-cream">
+                    {/* Padded so the tap target clears 40px on a phone. */}
+                    <Link
+                      href={l.href}
+                      className="inline-block py-2 transition hover:text-kasa-cream sm:py-1"
+                    >
                       {l.label}
                     </Link>
                   </li>
@@ -60,7 +64,10 @@ export function SiteFooter() {
               </p>
               <p className="mt-4 text-sm text-kasa-sand/80">
                 Phone:{" "}
-                <a className="text-kasa-cream underline-offset-4 hover:underline" href={BRAND_PHONE_TEL}>
+                <a
+                  className="inline-block py-2 text-kasa-cream underline-offset-4 hover:underline sm:py-0"
+                  href={BRAND_PHONE_TEL}
+                >
                   {BRAND_PHONE_DISPLAY}
                 </a>
               </p>

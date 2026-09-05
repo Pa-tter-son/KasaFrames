@@ -436,8 +436,14 @@ export function WallVisualizer() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
-      <div className="lg:col-span-8">
+    // Block layout on a phone so the wall can stay stuck to the top while the
+    // controls scroll underneath it; a grid item could only stick inside its own
+    // row, which is the whole problem on a narrow screen.
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+      {/* Direct child of the layout container so it can stay put while the
+          controls beneath it scroll. Nested one level deeper, it could only
+          stick within its own short column. */}
+      <div className="sticky top-14 z-20 -mx-4 bg-kasa-cream px-4 pb-3 pt-2 dark:bg-kasa-black sm:top-16 lg:static lg:col-span-8 lg:col-start-1 lg:row-start-1 lg:mx-0 lg:bg-transparent lg:p-0 dark:lg:bg-transparent">
         <WallStage
           roomSrc={roomSrc}
           wallCm={wallCm}
@@ -463,6 +469,11 @@ export function WallVisualizer() {
           className="relative w-full touch-none overflow-hidden rounded-[2rem] border border-kasa-black/10 bg-kasa-sand/20 outline-none focus-visible:ring-2 focus-visible:ring-kasa-gold dark:border-white/10"
         />
 
+      </div>
+
+      {/* Notes and the cost breakdown sit below the controls on a phone, and
+          back under the wall on a wide screen. */}
+      <div className="lg:col-span-8 lg:col-start-1 lg:row-start-2">
         {/* The photo may already be decoded before the handler is attached. */}
         <ImageReadyProbe imgRef={imgRef} onReady={() => detect(true)} pending={pendingDetect} />
 
@@ -496,8 +507,8 @@ export function WallVisualizer() {
         </div>
 
         {pieces.length > 0 ? (
-          <div className="mt-6 overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
-            <table className="w-full text-left text-sm">
+          <div className="mt-6 overflow-x-auto rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
+            <table className="w-full min-w-[34rem] text-left text-sm">
               <thead className="bg-kasa-black/5 text-xs uppercase tracking-wider text-kasa-muted dark:bg-white/5">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Piece</th>
@@ -525,7 +536,7 @@ export function WallVisualizer() {
         ) : null}
       </div>
 
-      <div className="lg:col-span-4">
+      <div className="mt-8 lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:row-span-2 lg:mt-0">
         <div className="rounded-[2rem] border border-kasa-black/10 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-kasa-gold">Your room</p>
 
@@ -602,7 +613,7 @@ export function WallVisualizer() {
                 setQuadMode("fitted");
                 setWallNote(null);
               }}
-              className="text-left text-[11px] text-kasa-muted underline-offset-4 hover:underline dark:text-kasa-sand/70"
+              className="py-2 text-left text-[11px] text-kasa-muted underline-offset-4 hover:underline dark:text-kasa-sand/70 sm:py-0"
             >
               Reset to a flat wall
             </button>

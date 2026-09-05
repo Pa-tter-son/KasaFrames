@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { beforeAfter } from "@/lib/data/site";
 import { Reveal } from "@/components/motion/reveal";
 
 export const metadata: Metadata = {
@@ -34,19 +33,17 @@ export default function InstallationPage() {
         ))}
       </section>
 
-      <section className="mt-16 grid gap-6 lg:grid-cols-2">
-        {beforeAfter.map((b) => (
-          <Reveal key={b.caption} className="overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
-            <div className="grid grid-cols-2">
-              <div className="relative aspect-square">
-                <Image src={b.before} alt="Before" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" />
-              </div>
-              <div className="relative aspect-square">
-                <Image src={b.after} alt="After" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 25vw" />
-              </div>
+      <section className="mt-16 grid gap-6 sm:grid-cols-2">
+        {[
+          { src: "/media/gallery-wall/corridor-portrait-grid.jpg", caption: "Corridor grid · A4 and A3, black moulding" },
+          { src: "/media/staircase/stair-cascade-quotes.jpg", caption: "Stair cascade · set out from the nosing, not the floor" },
+        ].map((shot) => (
+          <Reveal key={shot.src} className="overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
+            <div className="relative aspect-[4/3]">
+              <Image src={shot.src} alt={shot.caption} fill className="object-cover" sizes="(max-width: 640px) 100vw, 50vw" />
             </div>
             <p className="border-t border-kasa-black/10 px-6 py-4 text-sm text-kasa-muted dark:border-white/10 dark:text-kasa-sand/80">
-              {b.caption}
+              {shot.caption}
             </p>
           </Reveal>
         ))}

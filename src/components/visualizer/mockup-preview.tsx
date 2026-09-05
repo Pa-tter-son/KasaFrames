@@ -72,7 +72,7 @@ export function MockupPreview() {
     .join(", ");
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8">
       <div className="lg:col-span-8">
         <WallStage
           roomSrc={composition.roomSrc}
@@ -87,8 +87,8 @@ export function MockupPreview() {
           will work from it with you.
         </p>
 
-        <div className="mt-6 overflow-hidden rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
-          <table className="w-full text-left text-sm">
+        <div className="mt-6 overflow-x-auto rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
+          <table className="w-full min-w-[32rem] text-left text-sm">
             <thead className="bg-kasa-black/5 text-xs uppercase tracking-wider text-kasa-muted dark:bg-white/5">
               <tr>
                 <th className="px-4 py-3 font-semibold">Piece</th>
@@ -117,7 +117,7 @@ export function MockupPreview() {
         </div>
       </div>
 
-      <div className="lg:col-span-4">
+      <div className="mt-8 lg:mt-0 lg:col-span-4">
         <div className="sticky top-24 rounded-[2rem] border border-kasa-black/10 bg-kasa-black p-6 text-kasa-cream dark:border-white/10">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-kasa-gold">Your estimate</p>
 
