@@ -57,64 +57,6 @@ export const processSteps = [
   },
 ];
 
-export const portfolioItems = [
-  {
-    id: "p1",
-    title: "Cream Living — Ring Pair",
-    category: "Living rooms",
-    image:
-      "/media/gallery-wall/editorial-gallery-wall.jpg",
-    span: "lg:col-span-2 lg:row-span-2",
-  },
-  {
-    id: "p2",
-    title: "Stair Noir Cascade",
-    category: "Staircases",
-    image:
-      "/media/gallery-wall/corridor-salon-wall.jpg",
-    span: "lg:col-span-1",
-  },
-  {
-    id: "p3",
-    title: "Office Horizon Float",
-    category: "Offices",
-    image:
-      "/media/gallery-wall/heritage-family-wall.jpg",
-    span: "lg:col-span-1",
-  },
-  {
-    id: "p4",
-    title: "Bedroom Atelier Canvas",
-    category: "Bedrooms",
-    image:
-      "/media/framed-matte/framed-trio-mono.jpg",
-    span: "lg:col-span-2",
-  },
-  {
-    id: "p5",
-    title: "Restaurant Warm Aurum",
-    category: "Restaurants",
-    image:
-      "/media/canvas-wrap/canvas-wrap-quartet.jpg",
-    span: "lg:col-span-1",
-  },
-  {
-    id: "p6",
-    title: "Salon Editorial Grid",
-    category: "Beauty salons",
-    image:
-      "/media/photo-block/photo-block-cluster.jpg",
-    span: "lg:col-span-1 lg:row-span-2",
-  },
-  {
-    id: "p7",
-    title: "Airbnb Osu — Quiet Statement",
-    category: "Airbnb setups",
-    image:
-      "/media/gallery-wall/black-frame-grid-six.jpg",
-    span: "lg:col-span-2",
-  },
-];
 
 export const beforeAfter = [
   {
