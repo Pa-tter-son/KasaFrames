@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { matrix3dFor, planeToImage, type Quad } from "@/lib/perspective";
+import { matrix3dFor, planeToImage, type Point, type Quad } from "@/lib/perspective";
 import { pieceCm, styleMeta, type Piece } from "@/lib/visualizer";
 
 /** Reference width of the wall plane in its own pixel space. */
@@ -30,6 +30,10 @@ export function WallStage({
   interactive = false,
   showCorners = false,
   onCornerPointerDown,
+  measure,
+  onMeasurePointerDown,
+  showRule = false,
+  eyeLevelPct,
   ...rest
 }: {
   roomSrc: string;
@@ -44,6 +48,13 @@ export function WallStage({
   interactive?: boolean;
   showCorners?: boolean;
   onCornerPointerDown?: (index: number) => (event: React.PointerEvent) => void;
+  /** The measuring line, in image fractions, while the scale is being set. */
+  measure?: { a: Point; b: Point } | null;
+  onMeasurePointerDown?: (end: "a" | "b") => (event: React.PointerEvent) => void;
+  /** Draws a one-metre bar and the hanging line for a scale sanity check. */
+  showRule?: boolean;
+  /** The 145 cm hanging line, in wall percent, drawn with the rule. */
+  eyeLevelPct?: number;
 } & React.HTMLAttributes<HTMLDivElement>) {
   const localImg = React.useRef<HTMLImageElement>(null);
   const localStage = React.useRef<HTMLDivElement>(null);
@@ -52,16 +63,32 @@ export function WallStage({
 
   const [size, setSize] = React.useState({ w: 0, h: 0 });
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const el = stage.current;
     if (!el) return;
-    const measure = () => setSize({ w: el.clientWidth, h: image.current?.clientHeight ?? 0 });
-    const observer = new ResizeObserver(measure);
+
+    // Measure the photo, not the stage. A tall portrait is letterboxed inside
+    // the stage, and hanging the wall plane off the stage's width would slide
+    // every piece sideways by the margin.
+    const syncSize = () =>
+      setSize({ w: image.current?.clientWidth ?? 0, h: image.current?.clientHeight ?? 0 });
+    const observer = new ResizeObserver(syncSize);
     observer.observe(el);
     if (image.current) observer.observe(image.current);
-    measure();
-    return () => observer.disconnect();
-  }, [stage, image]);
+    syncSize();
+
+    // A cached photo can finish decoding before this runs, so the first
+    // measurement sees a zero-height image and onLoad never fires to correct
+    // it. Without these the stage stays blank and no frame ever appears.
+    const frame = requestAnimationFrame(syncSize);
+    const settle = window.setTimeout(syncSize, 250);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+    };
+  }, [stage, image, roomSrc]);
 
   const planeH = PLANE_W * (wallHeightCm / wallCm);
   const pxPerCm = PLANE_W / wallCm;
@@ -73,14 +100,19 @@ export function WallStage({
       className="relative w-full overflow-hidden rounded-[2rem] border border-kasa-black/10 bg-kasa-sand/20 dark:border-white/10"
       {...rest}
     >
+      {/* Shrink-wrapped around the photo, so the overlays below share its exact
+          box however the image is letterboxed by the height cap. */}
+      <div className="relative mx-auto w-fit overflow-hidden rounded-[1.75rem]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={image}
         src={roomSrc}
         alt="The wall"
-        className="block h-auto w-full select-none"
+        className="mx-auto block max-h-[72vh] w-auto max-w-full select-none"
         draggable={false}
-        onLoad={() => setSize({ w: stage.current?.clientWidth ?? 0, h: image.current?.clientHeight ?? 0 })}
+        onLoad={() =>
+          setSize({ w: image.current?.clientWidth ?? 0, h: image.current?.clientHeight ?? 0 })
+        }
       />
 
       {ready ? (
@@ -93,6 +125,50 @@ export function WallStage({
             transform: matrix3dFor(quad, PLANE_W, planeH, size.w, size.h),
           }}
         >
+          {/* A metre standing on the floor and the 145 cm hanging line, both
+              drawn on the wall itself. Between them you can check the scale
+              against the furniture without leaving the page. */}
+          {showRule ? (
+            <>
+              <div
+                className="pointer-events-none absolute"
+                style={{
+                  left: 4 * pxPerCm,
+                  bottom: 0,
+                  width: 3 * pxPerCm,
+                  height: 100 * pxPerCm,
+                  background: "rgba(201,169,98,0.95)",
+                }}
+              >
+                <span
+                  className="absolute left-full whitespace-nowrap font-bold text-kasa-black dark:text-white"
+                  style={{ bottom: 0, marginLeft: 4 * pxPerCm, fontSize: 13 * pxPerCm }}
+                >
+                  1 m
+                </span>
+              </div>
+
+              {typeof eyeLevelPct === "number" && eyeLevelPct > 0 && eyeLevelPct < 100 ? (
+                <div
+                  className="pointer-events-none absolute left-0 w-full"
+                  style={{
+                    top: `${eyeLevelPct}%`,
+                    height: Math.max(1, 0.7 * pxPerCm),
+                    backgroundImage:
+                      "repeating-linear-gradient(90deg, rgba(201,169,98,0.95) 0 14px, transparent 14px 26px)",
+                  }}
+                >
+                  <span
+                    className="absolute right-0 whitespace-nowrap font-bold text-kasa-black dark:text-white"
+                    style={{ bottom: 3 * pxPerCm, fontSize: 13 * pxPerCm }}
+                  >
+                    145 cm · eye level
+                  </span>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
           {pieces.map((piece) => (
             <FrameView
               key={piece.id}
@@ -133,6 +209,37 @@ export function WallStage({
           />
         </svg>
       ) : null}
+
+      {/* The measuring line: drag its ends across something of known size. */}
+      {measure && ready ? (
+        <>
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line
+              x1={measure.a.x * 100}
+              y1={measure.a.y * 100}
+              x2={measure.b.x * 100}
+              y2={measure.b.y * 100}
+              stroke="#12b981"
+              strokeWidth="3"
+              strokeDasharray="6 4"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          {(["a", "b"] as const).map((end) => (
+            <button
+              key={end}
+              type="button"
+              aria-label={`Measuring point ${end.toUpperCase()}`}
+              onPointerDown={onMeasurePointerDown?.(end)}
+              className="absolute z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-[11px] font-bold text-white shadow-lg active:cursor-grabbing"
+              style={{ left: `${measure[end].x * 100}%`, top: `${measure[end].y * 100}%` }}
+            >
+              {end.toUpperCase()}
+            </button>
+          ))}
+        </>
+      ) : null}
+      </div>
     </div>
   );
 }

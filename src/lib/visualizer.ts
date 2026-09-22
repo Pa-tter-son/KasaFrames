@@ -35,6 +35,56 @@ export const STYLE_PRODUCT: Record<FrameStyle, ProductId> = {
 
 export const CM_PER_INCH = 2.54;
 
+/**
+ * Things in a photograph whose real size the customer can check in seconds.
+ *
+ * Every frame on the wall is drawn against one number—how wide the wall is—and
+ * almost nobody knows that number. Guess 4.2 m for a 3 m wall and a 20 × 30
+ * print renders a third too small, which reads as "the visualizer is broken"
+ * rather than "the input was wrong". Measuring something ordinary instead is
+ * both easier to do and harder to get wrong.
+ */
+export interface ScaleReference {
+  key: string;
+  label: string;
+  /** Typical real length in cm. */
+  cm: number;
+  hint: string;
+}
+
+export const SCALE_REFERENCES: ScaleReference[] = [
+  { key: "door-h", label: "Door height", cm: 200, hint: "Standard internal door, top to floor" },
+  { key: "door-w", label: "Door width", cm: 80, hint: "Standard internal door, side to side" },
+  { key: "sofa-3", label: "Three-seat sofa", cm: 200, hint: "Arm to arm on a typical three-seater" },
+  { key: "sofa-2", label: "Two-seat sofa", cm: 150, hint: "Arm to arm on a loveseat" },
+  { key: "tv-unit", label: "TV unit / sideboard", cm: 150, hint: "End to end on a low cabinet" },
+  { key: "custom", label: "Something I measured", cm: 100, hint: "Anything you can put a tape to" },
+];
+
+
+/**
+ * Where the centre of a picture goes when it is hung properly.
+ *
+ * Galleries hang to 145 cm and so do we, because it puts the middle of the work
+ * at the eye level of someone standing. It is also the number that makes a
+ * mockup believable: a frame floating at an arbitrary height reads as wrong
+ * even when its size is exactly right.
+ */
+export const EYE_LEVEL_CM = 145;
+
+/**
+ * Wall coordinates run 0 at the top of the wall to 100 at the floor, so a
+ * height above the floor is the complement. Both helpers assume the wall plane
+ * ends at the skirting, which is how the corners are marked.
+ */
+export function hangHeightCm(yPct: number, wallHeightCm: number) {
+  return ((100 - yPct) / 100) * wallHeightCm;
+}
+
+export function yPctForHang(cm: number, wallHeightCm: number) {
+  return wallHeightCm > 0 ? 100 - (cm / wallHeightCm) * 100 : 50;
+}
+
 export interface Piece {
   id: string;
   productId: ProductId;

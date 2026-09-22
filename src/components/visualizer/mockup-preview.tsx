@@ -8,7 +8,7 @@ import { useCart } from "@/context/cart-provider";
 import { getProduct } from "@/lib/data/catalog";
 import { formatGhs, whatsappLink } from "@/lib/utils";
 import { FLAT_WALL } from "@/lib/perspective";
-import { costOf, loadComposition, pieceCm, type Composition } from "@/lib/visualizer";
+import { costOf, hangHeightCm, loadComposition, pieceCm, type Composition } from "@/lib/visualizer";
 import { ArrowLeft, MessageCircle, ShoppingBag } from "lucide-react";
 
 export function MockupPreview() {
@@ -83,8 +83,8 @@ export function MockupPreview() {
         />
 
         <p className="mt-4 text-xs text-kasa-muted dark:text-kasa-sand/70">
-          Drawn against a {composition.wallCm} cm wall. This preview stays on the site—send it to the studio and we
-          will work from it with you.
+          Drawn to scale against a {composition.wallCm} × {composition.wallHeightCm ?? 280} cm wall, so every piece is
+          the size it will be. This preview stays on the site—send it to the studio and we will work from it with you.
         </p>
 
         <div className="mt-6 overflow-x-auto rounded-[2rem] border border-kasa-black/10 dark:border-white/10">
@@ -94,6 +94,7 @@ export function MockupPreview() {
                 <th className="px-4 py-3 font-semibold">Piece</th>
                 <th className="px-4 py-3 font-semibold">Size</th>
                 <th className="px-4 py-3 font-semibold">On the wall</th>
+                <th className="px-4 py-3 font-semibold">Centre height</th>
                 <th className="px-4 py-3 text-right font-semibold">Total</th>
               </tr>
             </thead>
@@ -107,6 +108,9 @@ export function MockupPreview() {
                     <td className="px-4 py-3 text-kasa-muted">
                       {Math.round(wCm)} × {Math.round(hCm)} cm
                       {Math.round(line.piece.rotation) !== 0 ? ` · ${Math.round(line.piece.rotation)}°` : ""}
+                    </td>
+                    <td className="px-4 py-3 text-kasa-muted">
+                      {Math.round(hangHeightCm(line.piece.yPct, composition.wallHeightCm ?? 280))} cm
                     </td>
                     <td className="px-4 py-3 text-right font-medium">{formatGhs(line.totalGhs)}</td>
                   </tr>

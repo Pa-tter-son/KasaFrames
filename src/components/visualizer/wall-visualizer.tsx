@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,8 +18,8 @@ import {
   aspectFromQuad,
   detectWallQuad,
   fittedQuad,
-  FLAT_WALL,
   imageToPlane,
+  wallWidthFromReference,
   type Point,
   type Quad,
 } from "@/lib/perspective";
@@ -28,8 +29,12 @@ import {
   costOf,
   downscaleImage,
   artPanLimit,
+  EYE_LEVEL_CM,
+  hangHeightCm,
   pieceCm,
+  yPctForHang,
   saveComposition,
+  SCALE_REFERENCES,
   STYLES,
   STYLE_PRODUCT,
   type FrameStyle,
@@ -49,10 +54,79 @@ import {
   Upload,
 } from "lucide-react";
 
-const SAMPLE_ROOMS = [
-  { id: "loft-sofa", label: "Loft lounge", src: "/media/rooms/loft-sofa.jpg", wallCm: 420 },
-  { id: "warm-sideboard", label: "Warm sideboard", src: "/media/rooms/warm-sideboard.jpg", wallCm: 380 },
-  { id: "lilac-lounge", label: "Lilac corner", src: "/media/rooms/lilac-lounge.jpg", wallCm: 300 },
+interface SampleRoom {
+  id: string;
+  label: string;
+  src: string;
+  /** Width of the marked wall in cm, measured off the furniture—never guessed. */
+  wallCm: number;
+  /**
+   * Height of the same wall. The corners imply it, but stating it stops the
+   * first render using a height carried over from the room before this one.
+   */
+  wallHeightCm: number;
+  /**
+   * The wall in the photo, bottom edge on the skirting. Everything is hung
+   * against this, so a piece's height above the floor is a real number.
+   */
+  quad: Quad;
+  /** What we put the tape to, shown to the customer so the scale is checkable. */
+  measuredAgainst: string;
+}
+
+/**
+ * The sample rooms, each one calibrated rather than estimated.
+ *
+ * A frame is drawn at cm per pixel, so the whole illusion rests on how wide the
+ * wall really is. These three were measured against furniture of known size—a
+ * sofa, a sideboard—which is why a 20 × 30 in print lands at the size it would
+ * actually be in the room instead of a third too big.
+ */
+const SAMPLE_ROOMS: SampleRoom[] = [
+  {
+    id: "lilac-lounge",
+    label: "Lilac corner",
+    src: "/media/rooms/lilac-lounge.jpg",
+    wallCm: 310,
+    wallHeightCm: 554,
+    // A real corner, so the wall recedes: the right-hand edge is the corner
+    // itself, traced along the cornice above and the skirting below.
+    quad: [
+      { x: 0, y: 0 },
+      { x: 0.657, y: 0.169 },
+      { x: 0.657, y: 0.817 },
+      { x: 0, y: 0.851 },
+    ],
+    measuredAgainst: "the 200 cm sofa against it",
+  },
+  {
+    id: "loft-sofa",
+    label: "Loft lounge",
+    src: "/media/rooms/loft-sofa.jpg",
+    wallCm: 595,
+    wallHeightCm: 319,
+    quad: [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 1, y: 0.951 },
+      { x: 0, y: 0.951 },
+    ],
+    measuredAgainst: "the 230 cm sofa in front of it",
+  },
+  {
+    id: "warm-sideboard",
+    label: "Warm sideboard",
+    src: "/media/rooms/warm-sideboard.jpg",
+    wallCm: 403,
+    wallHeightCm: 216,
+    quad: [
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 1, y: 0.951 },
+      { x: 0, y: 0.951 },
+    ],
+    measuredAgainst: "the 155 cm sideboard below it",
+  },
 ];
 
 let counter = 1;
@@ -63,12 +137,21 @@ export function WallVisualizer() {
 
   const [roomSrc, setRoomSrc] = React.useState(SAMPLE_ROOMS[0].src);
   const [wallCm, setWallCm] = React.useState(SAMPLE_ROOMS[0].wallCm);
-  const [wallHeightCm, setWallHeightCm] = React.useState(280);
-  const [quad, setQuad] = React.useState<Quad>(FLAT_WALL);
-  const [quadMode, setQuadMode] = React.useState<"fitted" | "custom">("fitted");
+  const [wallHeightCm, setWallHeightCm] = React.useState(SAMPLE_ROOMS[0].wallHeightCm);
+  const [quad, setQuad] = React.useState<Quad>(SAMPLE_ROOMS[0].quad);
+  const [quadMode, setQuadMode] = React.useState<"fitted" | "custom">("custom");
+  const [scaleNote, setScaleNote] = React.useState<string | null>(
+    `Measured against ${SAMPLE_ROOMS[0].measuredAgainst}.`,
+  );
   const [imgSize, setImgSize] = React.useState({ w: 0, h: 0 });
   const [adjustingWall, setAdjustingWall] = React.useState(false);
   const [adjustingArt, setAdjustingArt] = React.useState(false);
+  const [measuring, setMeasuring] = React.useState(false);
+  const [measure, setMeasure] = React.useState<{ a: Point; b: Point } | null>(null);
+  const [referenceKey, setReferenceKey] = React.useState("sofa-3");
+  const [referenceCm, setReferenceCm] = React.useState(200);
+  const [calibrated, setCalibrated] = React.useState(true);
+  const [showRule, setShowRule] = React.useState(false);
   const [wallNote, setWallNote] = React.useState<string | null>(null);
   const [pieces, setPieces] = React.useState<Piece[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -81,6 +164,7 @@ export function WallVisualizer() {
   const imgRef = React.useRef<HTMLImageElement>(null);
   const dragRef = React.useRef<{ id: string; dxPct: number; dyPct: number } | null>(null);
   const cornerRef = React.useRef<number | null>(null);
+  const measureRef = React.useRef<"a" | "b" | null>(null);
   const artRef = React.useRef<{ id: string; x: number; y: number; artX: number; artY: number } | null>(null);
   const pendingDetect = React.useRef(false);
 
@@ -88,12 +172,20 @@ export function WallVisualizer() {
   const selected = pieces.find((p) => p.id === selectedId) ?? null;
   const cost = costOf(pieces, installation);
 
+  // Offer a size that suits the wall rather than a fixed rung on the list. The
+  // smallest frames are only ever right on a small wall, and starting there is
+  // what makes a visualizer look broken: the piece is correct but invisible.
   React.useEffect(() => {
     if (!product) return;
-    if (!product.sizes.some((s) => s.label === sizeLabel)) {
-      setSizeLabel(product.sizes[Math.min(2, product.sizes.length - 1)].label);
-    }
-  }, [product, sizeLabel]);
+    if (product.sizes.some((s) => s.label === sizeLabel)) return;
+
+    // Roughly a fifth of the wall: the proportion a single piece usually wants,
+    // and it lands on 20 × 30 in for an ordinary living-room wall.
+    const target = wallCm * 0.18;
+    const fits = product.sizes.filter((s) => s.widthIn * CM_PER_INCH <= target);
+    const pick = fits.length > 0 ? fits[fits.length - 1] : product.sizes[0];
+    setSizeLabel(pick.label);
+  }, [product, sizeLabel, wallCm]);
 
   // Track the photo's rendered size so an untouched wall can be fitted to it.
   React.useEffect(() => {
@@ -144,14 +236,72 @@ export function WallVisualizer() {
     }
   }, []);
 
-  function loadRoom(src: string, cm?: number) {
+  /**
+   * Loads a sample room with the wall we already measured, or an uploaded photo
+   * whose scale is still unknown. Nothing is auto-detected over a sample: we
+   * traced its corners by hand and a guess would only make it worse.
+   */
+  function loadRoom(src: string, sample?: SampleRoom) {
     setRoomSrc(src);
-    if (cm) setWallCm(cm);
     setPieces([]);
     setSelectedId(null);
-    setQuadMode("fitted");
     setWallNote(null);
+    setMeasuring(false);
+    setMeasure(null);
+
+    if (sample) {
+      setWallCm(sample.wallCm);
+      setWallHeightCm(sample.wallHeightCm);
+      setQuad(sample.quad);
+      setQuadMode("custom");
+      setCalibrated(true);
+      setScaleNote(`Measured against ${sample.measuredAgainst}.`);
+      pendingDetect.current = false;
+      return;
+    }
+
+    // A new photo is a new room; the old measurement no longer applies.
+    setQuadMode("fitted");
+    setCalibrated(false);
+    setScaleNote(null);
     pendingDetect.current = true;
+  }
+
+  function startMeasuring() {
+    // Lay the line across the lower middle of the photo, where furniture
+    // usually sits, so both ends start somewhere useful.
+    setMeasure({ a: { x: 0.3, y: 0.72 }, b: { x: 0.7, y: 0.72 } });
+    setMeasuring(true);
+    setAdjustingWall(false);
+    setAdjustingArt(false);
+  }
+
+  /** Turns the measured line into the wall's width, which sets every size. */
+  function finishMeasuring() {
+    if (measure) {
+      const aspect = wallHeightCm > 0 ? wallCm / wallHeightCm : 1;
+      const derived = wallWidthFromReference(quad, measure.a, measure.b, referenceCm, aspect);
+
+      if (derived) {
+        const rounded = Math.round(derived);
+        // Keep the wall's shape: the corners fixed the proportions, so the
+        // height has to move with the width rather than stay put.
+        setWallHeightCm(Math.round(clamp(rounded / aspect, 150, 700)));
+        setWallCm(clamp(rounded, 100, 900));
+        setCalibrated(true);
+        setScaleNote(
+          `Measured against ${referenceCm} cm of ${
+            SCALE_REFERENCES.find((r) => r.key === referenceKey)?.label.toLowerCase() ?? "your reference"
+          }.`,
+        );
+        setNotice(null);
+      } else {
+        setNotice("That measurement did not land on the wall. Put both dots inside the room and try again.");
+      }
+    }
+
+    setMeasuring(false);
+    setMeasure(null);
   }
 
   function currentSize() {
@@ -170,14 +320,20 @@ export function WallVisualizer() {
     };
   }
 
+  /** The hanging line, in wall percent. New pieces land on it by default. */
+  const eyeLevelPct = yPctForHang(EYE_LEVEL_CM, wallHeightCm);
+
   function addPiece() {
     const base = basePiece();
     if (!base) return;
     const piece: Piece = {
       ...base,
       id: uid(),
-      xPct: 42 + (pieces.length % 4) * 6,
-      yPct: 40 + (pieces.length % 3) * 5,
+      // Straight onto the hanging line, offset sideways so a second piece does
+      // not land exactly on the first. Starting at a believable height is half
+      // of what makes the mockup read as real.
+      xPct: clamp(42 + (pieces.length % 4) * 6, 5, 95),
+      yPct: clamp(eyeLevelPct, 5, 95),
     };
     setPieces((prev) => [...prev, piece]);
     setSelectedId(piece.id);
@@ -195,15 +351,18 @@ export function WallVisualizer() {
     const gapXPct = (6 / wallCm) * 100;
     const gapYPct = (6 / wallHeightCm) * 100;
 
+    // Every layout is centred on the hanging line, the way an installer would
+    // set it out: the middle of the arrangement at 145 cm, not the top piece.
+    const line = eyeLevelPct;
     const next: Piece[] = [];
 
     if (preset === "single") {
-      next.push({ ...base, id: uid(), xPct: 50, yPct: 45 });
+      next.push({ ...base, id: uid(), xPct: 50, yPct: line });
     }
 
     if (preset === "triptych") {
       const stepX = wPct + gapXPct;
-      [-1, 0, 1].forEach((i) => next.push({ ...base, id: uid(), xPct: 50 + i * stepX, yPct: 45 }));
+      [-1, 0, 1].forEach((i) => next.push({ ...base, id: uid(), xPct: 50 + i * stepX, yPct: line }));
     }
 
     if (preset === "grid") {
@@ -211,7 +370,7 @@ export function WallVisualizer() {
       const stepY = hPct + gapYPct;
       [-1, 0].forEach((row) =>
         [-1, 0, 1].forEach((col) =>
-          next.push({ ...base, id: uid(), xPct: 50 + col * stepX, yPct: 45 + (row + 0.5) * stepY }),
+          next.push({ ...base, id: uid(), xPct: 50 + col * stepX, yPct: line + (row + 0.5) * stepY }),
         ),
       );
     }
@@ -220,8 +379,11 @@ export function WallVisualizer() {
       const stepX = wPct + gapXPct;
       const stepY = hPct * 0.45;
       const startX = 50 - stepX * 2;
+      // A stair climbs past the hanging line rather than sitting on it, so
+      // centre the run on it instead.
+      const startY = line + stepY * 2;
       [0, 1, 2, 3, 4].forEach((i) =>
-        next.push({ ...base, id: uid(), xPct: startX + i * stepX, yPct: 70 - i * stepY }),
+        next.push({ ...base, id: uid(), xPct: startX + i * stepX, yPct: startY - i * stepY }),
       );
     }
 
@@ -306,6 +468,13 @@ export function WallVisualizer() {
     });
   };
 
+  const onMeasurePointerDown = (end: "a" | "b") => (event: React.PointerEvent) => {
+    measureRef.current = end;
+    (event.target as Element).setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const onCornerPointerDown = (index: number) => (event: React.PointerEvent) => {
     cornerRef.current = index;
     (event.target as Element).setPointerCapture?.(event.pointerId);
@@ -314,6 +483,16 @@ export function WallVisualizer() {
   };
 
   const onPointerMove = (event: React.PointerEvent) => {
+    if (measureRef.current) {
+      const at = pointerOnImage(event);
+      if (!at) return;
+      const end = measureRef.current;
+      setMeasure((prev) =>
+        prev ? { ...prev, [end]: { x: clamp(at.x, 0, 1), y: clamp(at.y, 0, 1) } } : prev,
+      );
+      return;
+    }
+
     if (cornerRef.current !== null) {
       const at = pointerOnImage(event);
       if (!at) return;
@@ -364,7 +543,11 @@ export function WallVisualizer() {
     let xPct = at.x - drag.dxPct;
     let yPct = at.y - drag.dyPct;
 
-    // Snap to the line the other pieces share. In wall coordinates this is a
+    // Snap to the 145 cm hanging line first, so letting go anywhere near it
+    // gives a height a real installer would have used.
+    if (Math.abs(yPct - eyeLevelPct) < 1.2) yPct = eyeLevelPct;
+
+    // Then to the line the other pieces share. In wall coordinates this is a
     // real hanging line, not just something that looks aligned on screen.
     const others = pieces.filter((p) => p.id !== drag.id);
     if (others.length > 0) {
@@ -454,6 +637,10 @@ export function WallVisualizer() {
           onPointerDownPiece={onPointerDownPiece}
           onCornerPointerDown={onCornerPointerDown}
           showCorners={adjustingWall}
+          showRule={showRule}
+          eyeLevelPct={eyeLevelPct}
+          measure={measure}
+          onMeasurePointerDown={onMeasurePointerDown}
           stageRef={stageRef}
           imgRef={imgRef}
           interactive
@@ -497,10 +684,16 @@ export function WallVisualizer() {
             {wallCm} × {wallHeightCm} cm wall, drawn in your photo&rsquo;s perspective
           </span>
           {selected ? (
-            <span>
-              Selected: {getProduct(selected.productId)?.name} · {selected.sizeLabel} in ·{" "}
-              {Math.round(selected.rotation)}°
-            </span>
+            (() => {
+              const { wCm, hCm } = pieceCm(selected);
+              return (
+                <span>
+                  Selected: {Math.round(wCm)} × {Math.round(hCm)} cm, centre{" "}
+                  {Math.round(hangHeightCm(selected.yPct, wallHeightCm))} cm off the floor
+                  {Math.round(selected.rotation) !== 0 ? ` · ${Math.round(selected.rotation)}°` : ""}
+                </span>
+              );
+            })()
           ) : (
             <span>Tap a frame to select it</span>
           )}
@@ -545,7 +738,7 @@ export function WallVisualizer() {
               <button
                 key={sample.id}
                 type="button"
-                onClick={() => loadRoom(sample.src, sample.wallCm)}
+                onClick={() => loadRoom(sample.src, sample)}
                 className={`overflow-hidden rounded-xl border transition ${
                   roomSrc === sample.src
                     ? "border-kasa-gold ring-2 ring-kasa-gold/30"
@@ -564,32 +757,128 @@ export function WallVisualizer() {
             <input type="file" accept="image/*" className="sr-only" onChange={(e) => onRoomFile(e.target.files?.[0])} />
           </label>
 
-          <div className="mt-5 grid gap-2">
-            <Label>Wall width ({wallCm} cm)</Label>
-            <input
-              type="range"
-              min={150}
-              max={700}
-              step={10}
-              value={wallCm}
-              onChange={(e) => setWallCm(Number(e.target.value))}
-              className="accent-kasa-gold"
-            />
-            <Label>
-              Wall height ({wallHeightCm} cm){quadMode === "custom" ? " — from your corners" : ""}
-            </Label>
-            <input
-              type="range"
-              min={150}
-              max={700}
-              step={10}
-              value={wallHeightCm}
-              onChange={(e) => setWallHeightCm(Number(e.target.value))}
-              className="accent-kasa-gold"
-            />
-            <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
-              Measure the wall once—everything is drawn against it at true size.
-            </p>
+          <div className="mt-6 h-px bg-kasa-black/10 dark:bg-white/10" />
+
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-kasa-gold">The scale</p>
+            {calibrated ? (
+              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                Measured
+              </span>
+            ) : (
+              <span className="rounded-full bg-kasa-black/10 px-2.5 py-1 text-[10px] font-semibold text-kasa-muted dark:bg-white/10">
+                Estimated
+              </span>
+            )}
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+            {scaleNote
+              ? `${scaleNote} Every frame is drawn to that scale, so what you see is the size it will be.`
+              : "Every frame is drawn against the size of this wall. Measure one thing in the photo and the rest follows—it beats guessing the wall in metres."}
+          </p>
+
+          <div className="mt-4 grid gap-3">
+            <Button
+              variant={measuring ? "primary" : "outline"}
+              size="sm"
+              onClick={() => (measuring ? finishMeasuring() : startMeasuring())}
+            >
+              <Ruler className="h-3.5 w-3.5" />
+              {measuring ? "Done measuring" : calibrated ? "Measure again" : "Measure something in the photo"}
+            </Button>
+
+            {measuring ? (
+              <div className="grid gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+                  Drag the green <span className="font-semibold">A</span> and <span className="font-semibold">B</span>{" "}
+                  dots onto each end of the thing you are measuring, then tell us how long it really is.
+                </p>
+
+                <div className="grid gap-2">
+                  <Label className="text-xs">What are you measuring?</Label>
+                  <Select
+                    value={referenceKey}
+                    onValueChange={(v) => {
+                      setReferenceKey(v);
+                      const preset = SCALE_REFERENCES.find((r) => r.key === v);
+                      if (preset && v !== "custom") setReferenceCm(preset.cm);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SCALE_REFERENCES.map((r) => (
+                        <SelectItem key={r.key} value={r.key}>
+                          {r.label}
+                          {r.key === "custom" ? "" : ` · ${r.cm} cm`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
+                    {SCALE_REFERENCES.find((r) => r.key === referenceKey)?.hint}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label className="text-xs">How long is it, in centimetres?</Label>
+                  <Input
+                    type="number"
+                    min={5}
+                    max={2000}
+                    value={referenceCm}
+                    onChange={(e) => setReferenceCm(Number(e.target.value))}
+                  />
+                </div>
+
+                <Button size="sm" onClick={finishMeasuring}>
+                  Use this scale
+                </Button>
+              </div>
+            ) : null}
+
+            <div className="grid gap-2">
+              <Label className="text-xs">
+                Wall width ({wallCm} cm){calibrated ? " — from your measurement" : ""}
+              </Label>
+              <input
+                type="range"
+                min={100}
+                max={900}
+                step={5}
+                value={wallCm}
+                onChange={(e) => {
+                  setWallCm(Number(e.target.value));
+                  setCalibrated(false);
+                  setScaleNote(null);
+                }}
+                className="accent-kasa-gold"
+              />
+              <Label className="text-xs">
+                Wall height ({wallHeightCm} cm){quadMode === "custom" ? " — from your corners" : ""}
+              </Label>
+              <input
+                type="range"
+                min={150}
+                max={700}
+                step={5}
+                value={wallHeightCm}
+                onChange={(e) => setWallHeightCm(Number(e.target.value))}
+                className="accent-kasa-gold"
+              />
+            </div>
+
+            <label className="flex items-center gap-3 text-xs">
+              <input
+                type="checkbox"
+                checked={showRule}
+                onChange={(e) => setShowRule(e.target.checked)}
+                className="h-4 w-4 accent-kasa-gold"
+              />
+              Show a 1-metre rule and the 145 cm hanging line
+            </label>
           </div>
 
           <div className="mt-5 grid gap-2">
@@ -652,11 +941,31 @@ export function WallVisualizer() {
                 <SelectContent>
                   {(product?.sizes ?? []).map((s) => (
                     <SelectItem key={s.label} value={s.label}>
-                      {s.label} · {formatGhs(s.frameGhs)}
+                      {s.label} in · {Math.round(s.widthIn * CM_PER_INCH)} × {Math.round(s.heightIn * CM_PER_INCH)} cm
+                      · {formatGhs(s.frameGhs)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Inches mean little to most people; centimetres against the
+                  wall are what tell you whether it will look right. */}
+              {(() => {
+                const size = currentSize();
+                if (!size) return null;
+                const wCm = size.widthIn * CM_PER_INCH;
+                const hCm = size.heightIn * CM_PER_INCH;
+                const share = Math.round((wCm / wallCm) * 100);
+                return (
+                  <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
+                    <span className="font-semibold">
+                      {Math.round(wCm)} × {Math.round(hCm)} cm
+                    </span>{" "}
+                    on the wall — {share}% of its width — hung with the centre{" "}
+                    {EYE_LEVEL_CM} cm off the floor.
+                  </p>
+                );
+              })()}
             </div>
 
             <Button onClick={addPiece} className="w-full">
@@ -746,6 +1055,25 @@ export function WallVisualizer() {
                     +5°
                   </Button>
                 </div>
+              </div>
+
+              {/* Height off the floor, which is what decides whether a mockup
+                  looks right once there is furniture under it. */}
+              <div className="grid gap-2">
+                <Label className="flex items-center justify-between">
+                  <span>Height off the floor</span>
+                  <span className="font-mono text-xs text-kasa-muted">
+                    {Math.round(hangHeightCm(selected.yPct, wallHeightCm))} cm to the centre
+                  </span>
+                </Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateSelected({ yPct: clamp(eyeLevelPct, 3, 97) })}
+                >
+                  <Ruler className="h-3.5 w-3.5" />
+                  Hang at eye level (145 cm)
+                </Button>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
@@ -887,10 +1215,11 @@ export function WallVisualizer() {
                 </div>
               ) : null}
 
-              <p className="text-[11px] text-kasa-muted dark:text-kasa-sand/70">
+              <p className="text-[11px] leading-relaxed text-kasa-muted dark:text-kasa-sand/70">
                 {(() => {
                   const { wCm, hCm } = pieceCm(selected);
-                  return `About ${Math.round(wCm)} × ${Math.round(hCm)} cm on the wall.`;
+                  const top = Math.round(hangHeightCm(selected.yPct, wallHeightCm) + hCm / 2);
+                  return `${Math.round(wCm)} × ${Math.round(hCm)} cm on the wall, top edge ${top} cm up.`;
                 })()}
               </p>
             </div>

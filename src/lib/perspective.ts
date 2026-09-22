@@ -169,6 +169,43 @@ export function planeToImage(quad: Quad, point: Point): Point {
 }
 
 /**
+ * How wide the wall must be for a known length to measure what it measures.
+ *
+ * The two points are dragged across something real in the photo — a door, a
+ * sofa — and `realCm` is what that thing actually measures. Both points are
+ * mapped onto the wall plane, where the distance between them is a fraction of
+ * the wall's width, and the wall's width falls out of the division.
+ *
+ * Returns null when the points land outside the plane or on top of each other.
+ */
+export function wallWidthFromReference(
+  quad: Quad,
+  a: Point,
+  b: Point,
+  realCm: number,
+  /** Wall width ÷ wall height. Shape only, so it survives rescaling. */
+  aspect: number,
+): number | null {
+  if (!(realCm > 0) || !(aspect > 0)) return null;
+
+  const pa = imageToPlane(quad, a);
+  const pb = imageToPlane(quad, b);
+  if (!pa || !pb) return null;
+
+  // Plane coordinates run 0-1 across the width and 0-1 down the height, which
+  // are different lengths. Put the vertical part into width units before
+  // combining them, or a reference measured down a door comes out wrong.
+  const dx = pb.x - pa.x;
+  const dy = (pb.y - pa.y) / aspect;
+  const fraction = Math.hypot(dx, dy);
+
+  if (!Number.isFinite(fraction) || fraction < 0.01) return null;
+
+  const wallCm = realCm / fraction;
+  return wallCm > 30 && wallCm < 3000 ? wallCm : null;
+}
+
+/**
  * Recovers the wall's true width-to-height ratio from its shape in the photo.
  *
  * Once someone marks the four corners of a real rectangle, the photograph
